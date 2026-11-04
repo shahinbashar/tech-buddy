@@ -22,6 +22,13 @@ class Endpoints {
   static const String circularDetail = '/circulars/{slug}';
   static const String circularSave = '/circulars/{id}/save';
 
+  // Study
+  static const String subjects = '/subjects';
+  static const String subjectDetail = '/subjects/{slug}';
+  static const String topicDetail =
+      '/subjects/{subjectSlug}/topics/{topicSlug}';
+  static const String topicComplete = '/progress/topics/{id}/complete';
+
   // Exams
   static const String todayExams = '/exams/today';
   static const String startExam = '/exams/{id}/attempts';

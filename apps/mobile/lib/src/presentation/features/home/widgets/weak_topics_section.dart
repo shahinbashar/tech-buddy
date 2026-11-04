@@ -9,6 +9,7 @@ import '../../../core/widgets/section_header.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../exams/riverpod/exam_providers.dart';
 import '../../exams/widgets/exam_navigation.dart';
+import '../../study/widgets/study_navigation.dart';
 
 class WeakTopicsSection extends ConsumerWidget {
   const WeakTopicsSection({required this.topics, super.key});
@@ -31,6 +32,13 @@ class WeakTopicsSection extends ConsumerWidget {
         for (final topic in topics)
           ListTile(
             contentPadding: EdgeInsets.zero,
+            // Tapping the topic opens its notes for revision.
+            onTap: topic.subjectSlug == null || topic.topicSlug == null
+                ? null
+                : () => context.openTopic(
+                    subjectSlug: topic.subjectSlug!,
+                    topicSlug: topic.topicSlug!,
+                  ),
             title: Text(topic.topicName),
             subtitle: Text(topic.subjectName),
             leading: StatusChip(

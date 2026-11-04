@@ -28,10 +28,7 @@ class FailureView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final failure = error;
-    final model = failure is BusinessFailure
-        ? BusinessFailureUIMapper.map(failure, context.locale)
-        : BusinessFailureUIMapper.unexpected(context.locale);
+    final model = BusinessFailureUIMapper.fromError(error, context.locale);
 
     return Center(
       child: Column(

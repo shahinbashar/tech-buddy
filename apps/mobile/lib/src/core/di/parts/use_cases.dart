@@ -36,7 +36,8 @@ final class ResetRepositoryUseCase {
       ..invalidate(localeRepositoryProvider)
       ..invalidate(circularRepositoryProvider)
       ..invalidate(examRepositoryProvider)
-      ..invalidate(dashboardRepositoryProvider);
+      ..invalidate(dashboardRepositoryProvider)
+      ..invalidate(studyRepositoryProvider);
   }
 }
 
@@ -128,4 +129,24 @@ SubmitAttemptUseCase submitAttemptUseCase(Ref ref) {
 @riverpod
 GetLeaderboardUseCase getLeaderboardUseCase(Ref ref) {
   return GetLeaderboardUseCase(ref.watch(examRepositoryProvider));
+}
+
+@riverpod
+GetSubjectsUseCase getSubjectsUseCase(Ref ref) {
+  return GetSubjectsUseCase(ref.watch(studyRepositoryProvider));
+}
+
+@riverpod
+GetSubjectDetailUseCase getSubjectDetailUseCase(Ref ref) {
+  return GetSubjectDetailUseCase(ref.watch(studyRepositoryProvider));
+}
+
+@riverpod
+GetTopicDetailUseCase getTopicDetailUseCase(Ref ref) {
+  return GetTopicDetailUseCase(ref.watch(studyRepositoryProvider));
+}
+
+@riverpod
+SetTopicCompletedUseCase setTopicCompletedUseCase(Ref ref) {
+  return SetTopicCompletedUseCase(ref.watch(studyRepositoryProvider));
 }

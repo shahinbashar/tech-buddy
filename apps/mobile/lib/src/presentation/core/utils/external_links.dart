@@ -1,6 +1,6 @@
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../data/services/network/endpoints.dart';
+import '../../../data/services/network/endpoints.dart';
 
 /// Uploads are served next to the API (`/uploads/...`), not under `/api`.
 Uri resolveServerUrl(String url) {

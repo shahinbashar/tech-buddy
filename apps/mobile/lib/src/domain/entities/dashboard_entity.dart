@@ -22,12 +22,18 @@ class WeakTopicEntity {
     required this.topicName,
     required this.subjectName,
     required this.accuracy,
+    this.subjectSlug,
+    this.topicSlug,
   });
 
   final String topicId;
   final String topicName;
   final String subjectName;
   final double accuracy;
+
+  /// Where to revise; null when the topic is no longer published.
+  final String? subjectSlug;
+  final String? topicSlug;
 }
 
 class ClosingSoonEntity {

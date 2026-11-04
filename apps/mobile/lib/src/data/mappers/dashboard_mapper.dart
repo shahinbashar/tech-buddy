@@ -20,6 +20,8 @@ class DashboardMapper {
           topicName: t.topicName,
           subjectName: t.subjectName,
           accuracy: t.accuracy,
+          subjectSlug: t.subjectSlug,
+          topicSlug: t.topicSlug,
         ),
     ],
     closingSoon: [

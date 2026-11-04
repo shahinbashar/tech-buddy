@@ -57,6 +57,12 @@ abstract final class BusinessFailureUIMapper {
     };
   }
 
+  /// Maps whatever an `AsyncError` carries: a [BusinessFailure] gets its
+  /// specific copy, anything else the generic [unexpected] copy.
+  static FailureUIModel fromError(Object error, AppLocalizations l10n) {
+    return error is BusinessFailure ? map(error, l10n) : unexpected(l10n);
+  }
+
   /// The degradation target for errors that are not a [BusinessFailure]
   /// at all — generic copy, retry offered.
   static FailureUIModel unexpected(AppLocalizations l10n) {

@@ -171,5 +171,28 @@
     "fullName": "পূর্ণ নাম",
     "registerFailed": "অ্যাকাউন্ট তৈরি করা যায়নি।",
     "leaveExam": "বের হন",
-    "vacanciesLabel": "পদসংখ্যা"
+    "vacanciesLabel": "পদসংখ্যা",
+    "navStudy": "পড়াশোনা",
+    "studyIntro": "একটি বিষয় বেছে নিন এবং টপিকগুলো শেষ করুন।",
+    "topicsProgress": "{completed}/{total} টপিক",
+    "@topicsProgress": {
+        "placeholders": {
+            "completed": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "noSubjects": "এখনো কোনো বিষয় প্রকাশিত হয়নি।",
+    "subtopics": "উপ-টপিক",
+    "notesTitle": "নোট",
+    "noNotes": "এই টপিকে এখনো কোনো নোট নেই।",
+    "lockedTopicTitle": "প্রিমিয়াম টপিক",
+    "lockedTopicBody": "এই টপিকটি প্রিমিয়ামের অংশ। নোট পড়তে প্রিমিয়াম চালু করুন।",
+    "markComplete": "সম্পন্ন হিসেবে চিহ্নিত করুন",
+    "completedTapToUndo": "সম্পন্ন · বাতিল করতে ট্যাপ করুন",
+    "practiseThisTopic": "এই টপিক অনুশীলন করুন",
+    "revise": "রিভিশন"
 }

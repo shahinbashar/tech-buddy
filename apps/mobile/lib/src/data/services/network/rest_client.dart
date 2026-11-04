@@ -60,6 +60,30 @@ abstract class RestClient {
   @DELETE(Endpoints.circularSave)
   Future<HttpResponse> unsaveCircular(@Path('id') String id);
 
+  // ── Study ──
+  @Extra({requestAuthKey: RequestAuth.protected})
+  @GET(Endpoints.subjects)
+  Future<HttpResponse> subjects();
+
+  @Extra({requestAuthKey: RequestAuth.protected})
+  @GET(Endpoints.subjectDetail)
+  Future<HttpResponse> subjectDetail(@Path('slug') String slug);
+
+  @Extra({requestAuthKey: RequestAuth.protected})
+  @GET(Endpoints.topicDetail)
+  Future<HttpResponse> topicDetail(
+    @Path('subjectSlug') String subjectSlug,
+    @Path('topicSlug') String topicSlug,
+  );
+
+  @Extra({requestAuthKey: RequestAuth.protected})
+  @POST(Endpoints.topicComplete)
+  Future<HttpResponse> completeTopic(@Path('id') String topicId);
+
+  @Extra({requestAuthKey: RequestAuth.protected})
+  @DELETE(Endpoints.topicComplete)
+  Future<HttpResponse> uncompleteTopic(@Path('id') String topicId);
+
   // ── Exams ──
   @Extra({requestAuthKey: RequestAuth.protected})
   @GET(Endpoints.todayExams)

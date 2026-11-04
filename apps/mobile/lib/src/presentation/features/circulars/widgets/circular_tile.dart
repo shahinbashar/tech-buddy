@@ -19,43 +19,47 @@ class CircularTile extends StatelessWidget {
     final deadline = DateFormat.yMMMd().add_jm().format(
       circular.applicationDeadline,
     );
-    return Card(
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(context.dimensions.radius.medium),
-        onTap: () => context.pushNamed(
-          Routes.circularDetail.name,
-          pathParameters: {'slug': circular.slug},
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(context.dimensions.space.s16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: context.dimensions.space.s8,
-                runSpacing: context.dimensions.space.s4,
-                children: [
-                  DeadlineChip(circular: circular),
-                  if (circular.isFeatured)
-                    Icon(
-                      Icons.star_rounded,
-                      color: context.color.status.warning,
-                    ),
-                ],
-              ),
-              SizedBox(height: context.dimensions.space.s8),
-              HeadingLevel3Text(circular.title),
-              BodySmallText.muted(circular.organizationName),
-              SizedBox(height: context.dimensions.space.s8),
-              LabelText.muted(
-                [
-                  '${context.locale.deadline}: $deadline',
-                  if (circular.vacancies != null)
-                    context.locale.vacancies('${circular.vacancies}'),
-                ].join(' · '),
-              ),
-            ],
+    // A bare InkWell is not announced as a button; screen readers need it.
+    return Semantics(
+      button: true,
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(context.dimensions.radius.medium),
+          onTap: () => context.pushNamed(
+            Routes.circularDetail.name,
+            pathParameters: {'slug': circular.slug},
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(context.dimensions.space.s16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: context.dimensions.space.s8,
+                  runSpacing: context.dimensions.space.s4,
+                  children: [
+                    DeadlineChip(circular: circular),
+                    if (circular.isFeatured)
+                      Icon(
+                        Icons.star_rounded,
+                        color: context.color.status.warning,
+                      ),
+                  ],
+                ),
+                SizedBox(height: context.dimensions.space.s8),
+                HeadingLevel3Text(circular.title),
+                BodySmallText.muted(circular.organizationName),
+                SizedBox(height: context.dimensions.space.s8),
+                LabelText.muted(
+                  [
+                    '${context.locale.deadline}: $deadline',
+                    if (circular.vacancies != null)
+                      context.locale.vacancies('${circular.vacancies}'),
+                  ].join(' · '),
+                ),
+              ],
+            ),
           ),
         ),
       ),

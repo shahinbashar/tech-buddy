@@ -20,6 +20,7 @@ enum Routes {
 
   home('/home'),
   circulars('/circulars'),
+  study('/study'),
   exams('/exams'),
   profile('/profile'),
 
@@ -27,7 +28,9 @@ enum Routes {
   circularDetail('/circular/:slug'),
   savedCirculars('/saved-circulars'),
   examRunner('/exam/:attemptId'),
-  examResult('/exam-result/:attemptId');
+  examResult('/exam-result/:attemptId'),
+  subjectDetail('/subject/:subjectSlug'),
+  topicDetail('/subject/:subjectSlug/topic/:topicSlug');
 
   const Routes(this.path);
 

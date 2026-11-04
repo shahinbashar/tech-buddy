@@ -28,12 +28,16 @@ class WeakTopicModel with WeakTopicModelMappable {
     required this.topicName,
     required this.subjectName,
     required this.accuracy,
+    this.subjectSlug,
+    this.topicSlug,
   });
 
   final String topicId;
   final String topicName;
   final String subjectName;
   final double accuracy;
+  final String? subjectSlug;
+  final String? topicSlug;
 }
 
 @MappableClass(generateMethods: GenerateMethods.decode)

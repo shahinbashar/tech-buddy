@@ -252,5 +252,28 @@
     "fullName": "Full name",
     "registerFailed": "Could not create your account.",
     "leaveExam": "Leave",
-    "vacanciesLabel": "Vacancies"
+    "vacanciesLabel": "Vacancies",
+    "navStudy": "Study",
+    "studyIntro": "Pick a subject and work through its topics.",
+    "topicsProgress": "{completed}/{total} topics",
+    "@topicsProgress": {
+        "placeholders": {
+            "completed": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "noSubjects": "No subjects published yet.",
+    "subtopics": "Subtopics",
+    "notesTitle": "Notes",
+    "noNotes": "No notes for this topic yet.",
+    "lockedTopicTitle": "Premium topic",
+    "lockedTopicBody": "This topic is part of Premium. Activate Premium to read its notes.",
+    "markComplete": "Mark as complete",
+    "completedTapToUndo": "Completed · tap to undo",
+    "practiseThisTopic": "Practise this topic",
+    "revise": "Revise"
 }

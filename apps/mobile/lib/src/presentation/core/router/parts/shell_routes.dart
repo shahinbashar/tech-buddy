@@ -30,6 +30,16 @@ StatefulShellRoute _shellRoutes(Ref ref) {
       StatefulShellBranch(
         routes: [
           GoRoute(
+            path: Routes.study.path,
+            name: Routes.study.name,
+            pageBuilder: (context, state) =>
+                const MaterialPage(child: StudyPage()),
+          ),
+        ],
+      ),
+      StatefulShellBranch(
+        routes: [
+          GoRoute(
             path: Routes.exams.path,
             name: Routes.exams.name,
             pageBuilder: (context, state) =>
@@ -52,7 +62,8 @@ StatefulShellRoute _shellRoutes(Ref ref) {
   );
 }
 
-/// Full-screen routes pushed above the tab shell (detail, exam runner, result).
+/// Full-screen routes pushed above the tab shell (details, exam runner,
+/// result, study pages).
 List<GoRoute> _focusRoutes(Ref ref) {
   return [
     GoRoute(
@@ -81,6 +92,22 @@ List<GoRoute> _focusRoutes(Ref ref) {
       name: Routes.examResult.name,
       builder: (context, state) =>
           ExamResultPage(attemptId: state.pathParameters['attemptId']!),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: Routes.subjectDetail.path,
+      name: Routes.subjectDetail.name,
+      builder: (context, state) =>
+          SubjectDetailPage(subjectSlug: state.pathParameters['subjectSlug']!),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: Routes.topicDetail.path,
+      name: Routes.topicDetail.name,
+      builder: (context, state) => TopicDetailPage(
+        subjectSlug: state.pathParameters['subjectSlug']!,
+        topicSlug: state.pathParameters['topicSlug']!,
+      ),
     ),
   ];
 }

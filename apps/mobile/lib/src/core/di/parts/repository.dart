@@ -46,3 +46,11 @@ DashboardRepository dashboardRepository(Ref ref) {
     crashReporter: ref.watch(crashReporterProvider),
   );
 }
+
+@Riverpod(keepAlive: true)
+StudyRepository studyRepository(Ref ref) {
+  return StudyRepositoryImpl(
+    remote: ref.watch(restClientServiceProvider),
+    crashReporter: ref.watch(crashReporterProvider),
+  );
+}

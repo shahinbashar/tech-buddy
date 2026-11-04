@@ -145,6 +145,9 @@ final class DimensionLayout {
   final double none = _DimensionPrimitive.v0;
   final double hairline = _DimensionPrimitive.v1;
 
+  /// The leading inset of a nested row, such as a subtopic under its topic.
+  final double treeIndent = _DimensionPrimitive.v48;
+
   /// A page indicator dot.
   final double dot = _DimensionPrimitive.v8;
 

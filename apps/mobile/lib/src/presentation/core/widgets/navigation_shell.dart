@@ -43,6 +43,10 @@ class _NavigationShellState extends State<NavigationShell> {
             label: context.locale.navCirculars,
           ),
           NavigationDestination(
+            icon: const Icon(Icons.menu_book_outlined),
+            label: context.locale.navStudy,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.assignment_outlined),
             label: context.locale.navExams,
           ),

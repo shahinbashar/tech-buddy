@@ -10,7 +10,7 @@ import '../../../core/widgets/deadline_chip.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../core/widgets/text/typography.dart';
 import '../riverpod/circular_providers.dart';
-import '../widgets/external_links.dart';
+import '../../../core/utils/external_links.dart';
 import '../widgets/info_section.dart';
 import '../widgets/save_circular_button.dart';
 
