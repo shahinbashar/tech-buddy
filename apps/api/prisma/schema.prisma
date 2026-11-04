@@ -1,0 +1,454 @@
+// Tech Buddy — database schema
+// Conventions: cuid ids, UTC timestamps, soft "status" is derived where possible.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── Enums ───────────────────────────────
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum PreparationGoal {
+  GOVERNMENT_IT
+  BCS
+  BANK
+  OTHER_GOVERNMENT
+  PRIVATE_SECTOR
+}
+
+enum AccessLevel {
+  FREE
+  PREMIUM
+}
+
+enum JobType {
+  GOVERNMENT
+  PRIVATE
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum CircularCategory {
+  IT
+  BANK
+  EDUCATION
+  HEALTH
+  ENGINEERING
+  ADMINISTRATION
+  DEFENSE
+  OTHER
+}
+
+enum SubjectCategory {
+  GENERAL
+  TECHNICAL
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ExamType {
+  DAILY
+  MODEL
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+enum EntitlementSource {
+  ADMIN_GRANT
+  PURCHASE
+}
+
+enum PaymentProvider {
+  MANUAL
+  BKASH
+  NAGAD
+  SSLCOMMERZ
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// ─────────────────────────────── Users ───────────────────────────────
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
+  fullName        String
+  phone           String?
+  role            Role             @default(USER)
+  preparationGoal PreparationGoal?
+  isActive        Boolean          @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  topicProgress       UserTopicProgress[]
+  examAttempts        ExamAttempt[]
+  entitlements        PremiumEntitlement[] @relation("EntitlementUser")
+  grantedEntitlements PremiumEntitlement[] @relation("EntitlementGrantedBy")
+  payments            Payment[]
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────── Circulars ───────────────────────────────
+
+model JobCircular {
+  id                       String           @id @default(cuid())
+  slug                     String           @unique
+  organizationName         String
+  organizationNameBn       String?
+  title                    String
+  category                 CircularCategory @default(OTHER)
+  jobType                  JobType          @default(GOVERNMENT)
+  employmentType           EmploymentType   @default(FULL_TIME)
+  publishedDate            DateTime
+  applicationStartDate     DateTime
+  applicationDeadline      DateTime
+  vacancies                Int?
+  salary                   String?
+  educationalQualification String?
+  ageRequirement           String?
+  additionalRequirements   String?
+  applicationInstructions  String?
+  applicationUrl           String?
+  isFeatured               Boolean          @default(false)
+  isPublished              Boolean          @default(false)
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+
+  attachments Attachment[]
+
+  @@index([isPublished, applicationDeadline])
+  @@index([category])
+  @@index([isFeatured])
+}
+
+/// Uploaded file (PDF/image) attached to a circular or a note.
+model Attachment {
+  id           String       @id @default(cuid())
+  fileName     String       @unique
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  circularId   String?
+  noteId       String?
+  createdAt    DateTime     @default(now())
+  circular     JobCircular? @relation(fields: [circularId], references: [id], onDelete: Cascade)
+  note         Note?        @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([circularId])
+  @@index([noteId])
+}
+
+// ─────────────────────────────── Learning ───────────────────────────────
+
+model Subject {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  nameBn      String?
+  description String?
+  category    SubjectCategory @default(GENERAL)
+  order       Int             @default(0)
+  isPublished Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  topics    Topic[]
+  questions Question[]
+
+  @@index([isPublished, order])
+}
+
+/// A topic or (when parentId is set) a subtopic. One level of nesting.
+model Topic {
+  id          String      @id @default(cuid())
+  subjectId   String
+  parentId    String?
+  slug        String
+  title       String
+  description String?
+  content     String?
+  accessLevel AccessLevel @default(FREE)
+  isPublished Boolean     @default(false)
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  subject   Subject             @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  parent    Topic?              @relation("TopicTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Topic[]             @relation("TopicTree")
+  notes     Note[]
+  questions Question[]
+  progress  UserTopicProgress[]
+
+  @@unique([subjectId, slug])
+  @@index([subjectId, isPublished, order])
+  @@index([parentId])
+}
+
+model Note {
+  id          String      @id @default(cuid())
+  topicId     String
+  title       String
+  summary     String?
+  content     String
+  accessLevel AccessLevel @default(FREE)
+  isPublished Boolean     @default(false)
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  topic       Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+
+  @@index([topicId, isPublished, order])
+}
+
+model UserTopicProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  topicId     String
+  completedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@index([topicId])
+}
+
+// ─────────────────────────────── Question bank ───────────────────────────────
+
+model Question {
+  id          String      @id @default(cuid())
+  subjectId   String
+  topicId     String?
+  text        String
+  textBn      String?
+  difficulty  Difficulty  @default(MEDIUM)
+  explanation String
+  reference   String?
+  accessLevel AccessLevel @default(FREE)
+  isPublished Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  subject       Subject          @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  topic         Topic?           @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  options       QuestionOption[]
+  examQuestions ExamQuestion[]
+
+  @@index([isPublished, accessLevel])
+  @@index([subjectId])
+  @@index([topicId])
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  text       String
+  textBn     String?
+  isCorrect  Boolean  @default(false)
+  order      Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, order])
+}
+
+// ─────────────────────────────── Examinations ───────────────────────────────
+
+/// Admin-configurable defaults. Single row with id = 1.
+model ExamSettings {
+  id                    Int      @id @default(1)
+  questionCount         Int      @default(20)
+  durationMinutes       Int      @default(20)
+  marksPerQuestion      Float    @default(1)
+  negativeMarking       Float    @default(0)
+  allowMultipleAttempts Boolean  @default(false)
+  autoGenerateDaily     Boolean  @default(true)
+  updatedAt             DateTime @updatedAt
+}
+
+model Exam {
+  id                    String      @id @default(cuid())
+  title                 String
+  description           String?
+  type                  ExamType    @default(DAILY)
+  /// Business date (Asia/Dhaka) the exam belongs to.
+  examDate              DateTime    @db.Date
+  /// Set only for auto-generated daily exams; guarantees one per day.
+  autoGeneratedFor      DateTime?   @unique @db.Date
+  durationMinutes       Int         @default(20)
+  marksPerQuestion      Float       @default(1)
+  negativeMarking       Float       @default(0)
+  allowMultipleAttempts Boolean     @default(false)
+  accessLevel           AccessLevel @default(FREE)
+  isPublished           Boolean     @default(false)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  questions ExamQuestion[]
+  attempts  ExamAttempt[]
+
+  @@index([isPublished, examDate])
+}
+
+model ExamQuestion {
+  id         String   @id @default(cuid())
+  examId     String
+  questionId String
+  order      Int
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([examId, questionId])
+  @@index([questionId])
+}
+
+model ExamAttempt {
+  id               String        @id @default(cuid())
+  examId           String
+  userId           String
+  attemptNumber    Int           @default(1)
+  status           AttemptStatus @default(IN_PROGRESS)
+  startedAt        DateTime      @default(now())
+  expiresAt        DateTime
+  submittedAt      DateTime?
+  totalQuestions   Int
+  correctCount     Int           @default(0)
+  incorrectCount   Int           @default(0)
+  unansweredCount  Int           @default(0)
+  obtainedMarks    Float         @default(0)
+  totalMarks       Float
+  percentage       Float         @default(0)
+  timeSpentSeconds Int           @default(0)
+  /// Snapshot of scoring rules at attempt start.
+  marksPerQuestion Float
+  negativeMarking  Float
+  examTitle        String
+
+  exam    Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers ExamAnswer[]
+
+  @@unique([examId, userId, attemptNumber])
+  @@index([userId, status, submittedAt])
+}
+
+/// Immutable snapshot of a question as it was shown in an attempt, plus the answer.
+model ExamAnswer {
+  id               String      @id @default(cuid())
+  attemptId        String
+  questionId       String?
+  order            Int
+  questionText     String
+  questionTextBn   String?
+  /// [{ id, text, textBn }] in the order shown to the candidate.
+  options          Json
+  correctOptionId  String
+  explanation      String
+  subjectId        String?
+  subjectName      String
+  topicId          String?
+  topicName        String?
+  difficulty       Difficulty
+  selectedOptionId String?
+  isCorrect        Boolean?
+  answeredAt       DateTime?
+
+  attempt ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, order])
+  @@index([subjectId])
+  @@index([topicId])
+}
+
+// ─────────────────────────────── Premium ───────────────────────────────
+
+/// Sellable package. durationDays = null means lifetime (one-time purchase).
+model PremiumPlan {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  description  String?
+  priceBdt     Int
+  durationDays Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  entitlements PremiumEntitlement[]
+  payments     Payment[]
+}
+
+/// Grants access to all PREMIUM content between startsAt and expiresAt (null = no expiry).
+model PremiumEntitlement {
+  id          String            @id @default(cuid())
+  userId      String
+  planId      String?
+  source      EntitlementSource @default(ADMIN_GRANT)
+  startsAt    DateTime          @default(now())
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  note        String?
+  grantedById String?
+  paymentId   String?           @unique
+  createdAt   DateTime          @default(now())
+
+  user      User         @relation("EntitlementUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy User?        @relation("EntitlementGrantedBy", fields: [grantedById], references: [id], onDelete: SetNull)
+  plan      PremiumPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  payment   Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([userId, revokedAt, expiresAt])
+}
+
+/// Reserved for gateway integration (bKash / Nagad / SSLCommerz). Not used by the MVP API.
+model Payment {
+  id             String          @id @default(cuid())
+  userId         String
+  planId         String
+  provider       PaymentProvider
+  status         PaymentStatus   @default(PENDING)
+  amountBdt      Int
+  transactionRef String?         @unique
+  rawPayload     Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan        PremiumPlan         @relation(fields: [planId], references: [id], onDelete: Restrict)
+  entitlement PremiumEntitlement?
+
+  @@index([userId, status])
+}

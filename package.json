@@ -1,0 +1,26 @@
+{
+  "name": "tech-buddy",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tech Buddy — Bangladesh job preparation & career portal",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20.18"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "dev": "pnpm --parallel --filter ./apps/* dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm --filter api build && pnpm --filter web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}
