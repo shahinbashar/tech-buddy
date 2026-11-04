@@ -79,3 +79,13 @@ export const PREPARATION_GOAL_LABELS = Object.fromEntries(
 ) as Record<PreparationGoal, string>;
 
 export const PAGE_SIZE = 12;
+
+export const ACCESS_LEVEL_OPTIONS = [
+  { value: 'FREE', label: 'Free' },
+  { value: 'PREMIUM', label: 'Premium' },
+];
+
+export const DIFFICULTY_OPTIONS = Object.entries(DIFFICULTY_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));

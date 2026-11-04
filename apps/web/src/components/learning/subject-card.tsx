@@ -39,7 +39,7 @@ export function SubjectCard({
           <span className="text-muted-foreground">
             {showProgress
               ? `${subject.completedCount} of ${subject.topicCount} topics completed`
-              : `${subject.topicCount} topics`}
+              : `${subject.topicCount} topic${subject.topicCount === 1 ? '' : 's'}`}
           </span>
           {showProgress && <Progress value={percent} aria-label={`${percent}% complete`} />}
         </div>

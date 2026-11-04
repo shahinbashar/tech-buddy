@@ -13,6 +13,7 @@ import {
 import { ChartCard } from '@/components/dashboard/chart-card';
 import type { UserDashboard } from '@/types/api';
 
+/** Horizontal bars so long subject names stay readable. */
 export function SubjectPerformanceChart({ data }: { data: UserDashboard['subjectPerformance'] }) {
   return (
     <ChartCard
@@ -22,30 +23,30 @@ export function SubjectPerformanceChart({ data }: { data: UserDashboard['subject
       emptyMessage="Subject analytics appear after your first exam."
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, left: 8, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
           <XAxis
-            dataKey="subjectName"
+            type="number"
+            allowDecimals={false}
             tick={{ fontSize: 12 }}
             stroke="var(--muted-foreground)"
-            interval={0}
           />
-          <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
+          <YAxis
+            type="category"
+            dataKey="subjectName"
+            width={120}
+            tick={{ fontSize: 12 }}
+            stroke="var(--muted-foreground)"
+          />
           <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)' }} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar
-            dataKey="correct"
-            name="Correct"
-            stackId="a"
-            fill="var(--chart-2)"
-            radius={[0, 0, 0, 0]}
-          />
+          <Bar dataKey="correct" name="Correct" stackId="a" fill="var(--chart-2)" />
           <Bar
             dataKey="incorrect"
             name="Incorrect"
             stackId="a"
             fill="var(--chart-3)"
-            radius={[4, 4, 0, 0]}
+            radius={[0, 4, 4, 0]}
           />
         </BarChart>
       </ResponsiveContainer>
