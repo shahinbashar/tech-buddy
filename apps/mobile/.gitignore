@@ -148,3 +148,7 @@ app.*.symbols
 
 # Localization Generated Files
 /lib/src/core/gen/
+
+# Applications commit their lockfile for reproducible builds
+# (https://dart.dev/tools/pub/glossary#lockfile).
+!pubspec.lock
