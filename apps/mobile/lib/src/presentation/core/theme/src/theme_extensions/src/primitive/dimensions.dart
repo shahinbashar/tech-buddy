@@ -9,7 +9,6 @@ abstract final class _DimensionPrimitive {
   static const double v1_5 = 1.5;
   static const double v2 = 2;
   static const double v4 = 4;
-  static const double v6 = 6;
   static const double v8 = 8;
   static const double v12 = 12;
   static const double v16 = 16;

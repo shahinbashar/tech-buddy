@@ -7,7 +7,6 @@ extension LocalizationExtension on AppLocalizations {
     return switch (languageCode) {
       'en' => english,
       'bn' => bangla,
-      'ar' => arabic,
       _ => languageCode,
     };
   }

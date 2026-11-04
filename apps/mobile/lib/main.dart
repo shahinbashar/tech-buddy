@@ -25,7 +25,11 @@ class MyApp extends ConsumerWidget {
         theme: context.lightTheme,
         darkTheme: context.darkTheme,
         themeMode: .system,
-        routerConfig: ref.read(goRouterProvider),
+        // Watched, not read: Riverpod 3 pauses providers nobody listens
+        // to, which would pause the router's `routerState` subscription and
+        // leave the gate stuck on splash. The router never rebuilds — its
+        // provider only `listen`s — so watching is free.
+        routerConfig: ref.watch(goRouterProvider),
       ),
     );
   }

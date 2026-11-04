@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/extensions/localization.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/brand_mark.dart';
 import '../../../../core/widgets/text/link_text.dart';
 import '../../../../core/widgets/text/typography.dart';
 
@@ -24,7 +25,7 @@ class EmailVerificationPage extends StatelessWidget {
             child: Column(
               children: [
                 Gap(context.dimensions.space.s24),
-                FlutterLogo(size: context.dimensions.layout.logo),
+                BrandMark(size: context.dimensions.layout.logo),
                 Gap(context.dimensions.space.s24),
                 HeadingLevel1Text(context.locale.checkYourMail),
                 Gap(context.dimensions.space.s8),

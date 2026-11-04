@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/brand_mark.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -9,7 +10,7 @@ class SplashPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.color.background.surface,
-      body: Center(child: FlutterLogo(size: context.dimensions.layout.logo)),
+      body: Center(child: BrandMark(size: context.dimensions.layout.logo)),
     );
   }
 }

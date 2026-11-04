@@ -145,9 +145,6 @@ final class DimensionLayout {
   final double none = _DimensionPrimitive.v0;
   final double hairline = _DimensionPrimitive.v1;
 
-  /// A list bullet.
-  final double bullet = _DimensionPrimitive.v6;
-
   /// A page indicator dot.
   final double dot = _DimensionPrimitive.v8;
 
@@ -155,9 +152,12 @@ final class DimensionLayout {
   final double field = _DimensionPrimitive.v66;
 
   /// The brand mark at its two sizes: inline on a form, and as the hero of
-  /// a splash or onboarding screen.
-  final double logoSmall = _DimensionPrimitive.v100;
-  final double logo = _DimensionPrimitive.v200;
+  /// the splash and login screens.
+  final double logoSmall = _DimensionPrimitive.v66;
+  final double logo = _DimensionPrimitive.v100;
+
+  /// The hero illustration of an onboarding slide.
+  final double illustration = _DimensionPrimitive.v200;
 }
 
 /// Widths to switch layout at.

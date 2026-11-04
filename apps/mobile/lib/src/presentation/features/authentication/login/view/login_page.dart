@@ -10,6 +10,7 @@ import '../../../../../domain/failures/business_failure.dart';
 import '../../../../core/failure/business_failure_ui_mapper.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/brand_mark.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/text/link_text.dart';
 import '../../../../core/widgets/text/typography.dart';
@@ -97,7 +98,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: const LanguageSwitcherWidget(),
               ),
               Gap(context.dimensions.space.s16),
-              FlutterLogo(size: context.dimensions.layout.logo),
+              BrandMark(size: context.dimensions.layout.logo),
               Gap(context.dimensions.space.s80),
               Form(
                 key: _formKey,

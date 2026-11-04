@@ -10,6 +10,7 @@ import '../../../../../domain/failures/business_failure.dart';
 import '../../../../core/failure/business_failure_ui_mapper.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/brand_mark.dart';
 import '../../../../core/widgets/text/link_text.dart';
 import '../../../../core/widgets/text/typography.dart';
 import '../riverpod/registration_provider.dart';
@@ -74,7 +75,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Gap(context.dimensions.space.s80),
-              FlutterLogo(size: context.dimensions.layout.logoSmall),
+              BrandMark(size: context.dimensions.layout.logoSmall),
               Gap(context.dimensions.space.s80),
               TextFormField(
                 controller: _nameController,

@@ -13,6 +13,7 @@ class PracticeActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLaunching = ref.watch(examLauncherProvider).isLoading;
+
     Future<void> start({required bool mistakesOnly}) async {
       final attemptId = await ref
           .read(examLauncherProvider.notifier)
@@ -22,30 +23,57 @@ class PracticeActions extends ConsumerWidget {
       }
     }
 
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: FilledButton.tonalIcon(
-            onPressed: isLaunching ? null : () => start(mistakesOnly: true),
-            icon: const Icon(Icons.replay),
-            label: Text(
-              context.locale.practiseMistakes,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        _PracticeOptionCard(
+          icon: Icons.replay_rounded,
+          title: context.locale.practiseMistakes,
+          subtitle: context.locale.practiseMistakesHint,
+          onTap: isLaunching ? null : () => start(mistakesOnly: true),
         ),
-        SizedBox(width: context.dimensions.space.s8),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: isLaunching ? null : () => start(mistakesOnly: false),
-            icon: const Icon(Icons.shuffle),
-            label: Text(
-              context.locale.randomPractice,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        SizedBox(height: context.dimensions.space.s8),
+        _PracticeOptionCard(
+          icon: Icons.shuffle_rounded,
+          title: context.locale.randomPractice,
+          subtitle: context.locale.randomPracticeHint,
+          onTap: isLaunching ? null : () => start(mistakesOnly: false),
         ),
       ],
+    );
+  }
+}
+
+class _PracticeOptionCard extends StatelessWidget {
+  const _PracticeOptionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  /// Null while a practice set is being created, which disables the card.
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        enabled: onTap != null,
+        onTap: onTap,
+        leading: CircleAvatar(
+          backgroundColor: context.color.primary.tint,
+          child: Icon(icon, color: context.color.primary.defaultValue),
+        ),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right_rounded),
+      ),
     );
   }
 }

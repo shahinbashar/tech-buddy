@@ -17,20 +17,22 @@ class OnboardingPage extends ConsumerStatefulWidget {
   ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
 }
 
-class _OnboardingPageState extends ConsumerState<OnboardingPage>
-    with TickerProviderStateMixin {
-  late PageController _pageController;
+class _OnboardingPageState extends ConsumerState<OnboardingPage> {
+  final _pageController = PageController();
   int _currentPage = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
-
-  void _onGetStarted() {
+  /// Marks onboarding done; the router gate moves on by itself once the
+  /// status provider re-reads the flag.
+  void _complete() {
     ref.read(markOnboardingCompletedUseCaseProvider).call();
     ref.invalidate(onboardingStatusProvider);
+  }
+
+  void _next() {
+    _pageController.nextPage(
+      duration: Durations.medium2,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -41,112 +43,152 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
 
   @override
   Widget build(BuildContext context) {
+    final slides = _onboardingSlides(context);
+    final isLast = _currentPage == slides.length - 1;
+
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 100,
+        child: Column(
+          children: [
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: Visibility.maintain(
+                visible: !isLast,
+                child: TextButton(
+                  onPressed: _complete,
+                  child: Text(context.locale.skip),
+                ),
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.7,
-                  child: PageView(
-                    controller: _pageController,
-                    onPageChanged: (int page) {
-                      setState(() => _currentPage = page);
-                    },
-                    children: _getOnboardingItems(context).map((item) {
-                      return Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: context.dimensions.space.s24,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            HeadingLevel1Text(
-                              item.title,
-                              textAlign: TextAlign.center,
-                            ),
-                            Gap(context.dimensions.space.s24),
-                            item.image,
-                            Gap(context.dimensions.space.s24),
-                            Column(
-                              children: item.features.map((feature) {
-                                return _OnboardingListItem(title: feature);
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                Gap(context.dimensions.space.s24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _getOnboardingItems(context).map((item) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: context.dimensions.space.s4,
-                      ),
-                      child: Icon(
-                        Icons.circle,
-                        size: context.dimensions.layout.dot,
-                        color: _currentPage == item.index
-                            ? context.color.primary.defaultValue
-                            : context.color.text.muted,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                Gap(context.dimensions.size.iconDisplay),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: context.dimensions.space.s24,
-                  ),
-                  child: FilledButton(
-                    onPressed: _onGetStarted,
-                    child: Text(context.locale.getStarted),
-                  ),
-                ),
-              ],
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (page) => setState(() => _currentPage = page),
+                children: [
+                  for (final slide in slides) _OnboardingSlide(slide: slide),
+                ],
+              ),
             ),
-          ),
+            _PageDots(count: slides.length, current: _currentPage),
+            Padding(
+              padding: EdgeInsets.all(context.dimensions.space.s24),
+              child: FilledButton(
+                onPressed: isLast ? _complete : _next,
+                child: Text(
+                  isLast ? context.locale.getStarted : context.locale.next,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _OnboardingListItem extends StatelessWidget {
-  const _OnboardingListItem({required this.title});
+class _OnboardingSlide extends StatelessWidget {
+  const _OnboardingSlide({required this.slide});
 
-  final String title;
+  final _OnboardingSlideData slide;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: context.dimensions.space.s24),
+      child: Column(
+        children: [
+          Gap(context.dimensions.space.s24),
+          _SlideIllustration(icon: slide.icon),
+          Gap(context.dimensions.space.s32),
+          HeadingLevel1Text(slide.title, textAlign: TextAlign.center),
+          Gap(context.dimensions.space.s24),
+          for (final point in slide.points) _OnboardingPoint(text: point),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlideIllustration extends StatelessWidget {
+  const _SlideIllustration({required this.icon});
+
+  final IconData icon;
+
+  /// The icon fills this fraction of the tinted disc.
+  static const double _iconRatio = 0.45;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = context.dimensions.layout.illustration;
+
+    return ExcludeSemantics(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: context.color.primary.tint,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: size * _iconRatio,
+          color: context.color.primary.defaultValue,
+        ),
+      ),
+    );
+  }
+}
+
+class _OnboardingPoint extends StatelessWidget {
+  const _OnboardingPoint({required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: context.dimensions.space.s16),
+      padding: EdgeInsets.only(bottom: context.dimensions.space.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Icon(
-            Icons.circle,
-            size: context.dimensions.layout.bullet,
-            color: context.color.text.muted,
+            Icons.check_circle_rounded,
+            size: context.dimensions.size.iconMedium,
+            color: context.color.primary.defaultValue,
           ),
           Gap(context.dimensions.space.s8),
-          Expanded(
-            child: Baseline(
-              baseline: context.dimensions.space.s8,
-              baselineType: TextBaseline.alphabetic,
-              child: BodySmallText(title),
+          Expanded(child: BodySmallText(text)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PageDots extends StatelessWidget {
+  const _PageDots({required this.count, required this.current});
+
+  final int count;
+  final int current;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var i = 0; i < count; i++)
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: context.dimensions.space.s4,
+              ),
+              child: Icon(
+                Icons.circle,
+                size: context.dimensions.layout.dot,
+                color: i == current
+                    ? context.color.primary.defaultValue
+                    : context.color.text.muted,
+              ),
             ),
-          ),
         ],
       ),
     );
