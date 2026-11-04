@@ -27,6 +27,8 @@ import {
 } from './dto/exam.dto';
 import { ExamsAdminService } from './exams-admin.service';
 import { ExamsService } from './exams.service';
+import { CreatePracticeDto } from './dto/practice.dto';
+import { PracticeService } from './practice.service';
 
 @ApiTags('exams')
 @ApiBearerAuth()
@@ -52,9 +54,27 @@ export class ExamsController {
     return this.examsService.findOne(user, id);
   }
 
+  @Get(':id/leaderboard')
+  leaderboard(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.examsService.leaderboard(user, id);
+  }
+
   @Post(':id/attempts')
   start(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.attemptsService.start(user, id);
+  }
+}
+
+@ApiTags('practice')
+@ApiBearerAuth()
+@Controller('practice')
+export class PracticeController {
+  constructor(private readonly practiceService: PracticeService) {}
+
+  /** Creates a personal practice set and starts it; returns the attempt to open. */
+  @Post()
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreatePracticeDto) {
+    return this.practiceService.create(user, dto);
   }
 }
 

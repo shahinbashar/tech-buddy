@@ -14,7 +14,7 @@ import { canAccess } from '../premium/premium-access';
 import { PremiumAccessService } from '../premium/premium-access.service';
 import { buildAnswerSnapshots, parseSnapshotOptions } from './attempt-snapshot';
 import { type SaveAnswerDto } from './dto/exam.dto';
-import { isWithinAttemptWindow } from './exam.constants';
+import { examVisibleTo, isWithinAttemptWindow } from './exam.constants';
 import { computeScore, timeSpentSeconds } from './scoring';
 
 type AttemptWithAnswers = ExamAttempt & { answers: ExamAnswer[] };
@@ -29,7 +29,7 @@ export class AttemptsService {
   /** Starts a new attempt, or returns the attempt already in progress. */
   async start(user: AuthUser, examId: string): Promise<{ attemptId: string; resumed: boolean }> {
     const exam = await this.prisma.exam.findFirst({
-      where: { id: examId, isPublished: true },
+      where: { id: examId, ...examVisibleTo(user.id) },
       include: {
         questions: {
           orderBy: { order: 'asc' },

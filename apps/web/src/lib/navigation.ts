@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Bookmark,
   BookOpen,
   BriefcaseBusiness,
   ClipboardList,
@@ -36,6 +37,7 @@ export const USER_NAV: NavItem[] = [
   { href: '/exams', label: 'Daily Exam', icon: ClipboardList, matchPrefix: true },
   { href: '/dashboard/history', label: 'Exam History', icon: History },
   { href: '/dashboard/progress', label: 'Learning Progress', icon: ListChecks },
+  { href: '/dashboard/saved', label: 'Saved Circulars', icon: Bookmark },
   { href: '/dashboard/premium', label: 'Premium Content', icon: Crown },
   { href: '/profile', label: 'Profile', icon: Settings },
 ];

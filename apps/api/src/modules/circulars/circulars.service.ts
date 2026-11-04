@@ -80,13 +80,53 @@ export class CircularsService {
     return { running, archived, closingSoon };
   }
 
-  async findPublicBySlug(slug: string) {
+  async findPublicBySlug(slug: string, userId?: string) {
     const circular = await this.prisma.jobCircular.findFirst({
       where: { slug, isPublished: true },
       include: { attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } } },
     });
     if (!circular) throw new NotFoundException('Circular not found');
-    return withStatus(circular, new Date());
+    const isSaved = userId
+      ? (await this.prisma.savedCircular.count({ where: { userId, circularId: circular.id } })) > 0
+      : false;
+    return { ...withStatus(circular, new Date()), isSaved };
+  }
+
+  // ─────────────── Saved circulars ───────────────
+
+  /** The user's saved circulars: still-running ones first (closing soonest), then closed. */
+  async listSaved(userId: string) {
+    const now = new Date();
+    const saved = await this.prisma.savedCircular.findMany({
+      where: { userId, circular: { isPublished: true } },
+      select: { createdAt: true, circular: { select: listSelect } },
+    });
+    return saved
+      .map(({ circular, createdAt }) => ({ ...withStatus(circular, now), savedAt: createdAt }))
+      .sort((a, b) => {
+        const aClosed = a.applicationDeadline < now ? 1 : 0;
+        const bClosed = b.applicationDeadline < now ? 1 : 0;
+        if (aClosed !== bClosed) return aClosed - bClosed;
+        const diff = a.applicationDeadline.getTime() - b.applicationDeadline.getTime();
+        return aClosed ? -diff : diff;
+      });
+  }
+
+  async save(userId: string, circularId: string): Promise<{ saved: true }> {
+    const exists = await this.prisma.jobCircular.count({
+      where: { id: circularId, isPublished: true },
+    });
+    if (!exists) throw new NotFoundException('Circular not found');
+    await this.prisma.savedCircular.upsert({
+      where: { userId_circularId: { userId, circularId } },
+      create: { userId, circularId },
+      update: {},
+    });
+    return { saved: true };
+  }
+
+  async unsave(userId: string, circularId: string): Promise<void> {
+    await this.prisma.savedCircular.deleteMany({ where: { userId, circularId } });
   }
 
   // ─────────────── Admin ───────────────

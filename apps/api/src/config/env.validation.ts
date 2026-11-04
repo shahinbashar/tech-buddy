@@ -48,6 +48,10 @@ class EnvironmentVariables {
   @IsString()
   JWT_EXPIRES_IN = '7d';
 
+  /** Mobile refresh-token lifetime (access tokens use JWT_EXPIRES_IN). */
+  @IsString()
+  REFRESH_TOKEN_EXPIRES_IN = '30d';
+
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   COOKIE_SECURE = false;

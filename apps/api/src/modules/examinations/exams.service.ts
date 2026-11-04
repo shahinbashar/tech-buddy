@@ -8,7 +8,8 @@ import { type PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { canAccess } from '../premium/premium-access';
 import { PremiumAccessService } from '../premium/premium-access.service';
 import { ExamGeneratorService } from './exam-generator.service';
-import { isWithinAttemptWindow } from './exam.constants';
+import { displayName, rankAttempts, topPercent } from './leaderboard';
+import { examVisibleTo, isWithinAttemptWindow, PUBLIC_EXAM_WHERE } from './exam.constants';
 
 const examCardInclude = { _count: { select: { questions: true } } } satisfies Prisma.ExamInclude;
 type ExamWithCount = Prisma.ExamGetPayload<{ include: typeof examCardInclude }>;
@@ -29,7 +30,7 @@ export class ExamsService {
   async today(user: AuthUser) {
     await this.generator.ensureTodaysDailyExam();
     const exams = await this.prisma.exam.findMany({
-      where: { isPublished: true, examDate: dhakaDate() },
+      where: { ...PUBLIC_EXAM_WHERE, examDate: dhakaDate() },
       include: examCardInclude,
       orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
     });
@@ -39,7 +40,7 @@ export class ExamsService {
   /** Published exams up to today, newest first — lets candidates practise missed days. */
   async list(user: AuthUser, query: PaginationQueryDto) {
     const where: Prisma.ExamWhereInput = {
-      isPublished: true,
+      ...PUBLIC_EXAM_WHERE,
       examDate: { lte: dhakaDate() },
       ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
     };
@@ -57,7 +58,7 @@ export class ExamsService {
 
   async findOne(user: AuthUser, id: string) {
     const exam = await this.prisma.exam.findFirst({
-      where: { id, isPublished: true },
+      where: { id, ...examVisibleTo(user.id) },
       include: examCardInclude,
     });
     if (!exam) throw new NotFoundException('Exam not found');
@@ -77,6 +78,49 @@ export class ExamsService {
       orderBy: { attemptNumber: 'desc' },
     });
     return { ...card, attempts };
+  }
+
+  /**
+   * Merit list from each candidate's first submitted attempt (retakes don't count).
+   * Not available for private practice sets.
+   */
+  async leaderboard(user: AuthUser, examId: string, limit = 10) {
+    const exam = await this.prisma.exam.findFirst({
+      where: { id: examId, ...PUBLIC_EXAM_WHERE },
+      select: { id: true, title: true },
+    });
+    if (!exam) throw new NotFoundException('Exam not found');
+
+    const attempts = await this.prisma.examAttempt.findMany({
+      where: { examId, attemptNumber: 1, status: 'SUBMITTED' },
+      select: {
+        userId: true,
+        obtainedMarks: true,
+        percentage: true,
+        timeSpentSeconds: true,
+        user: { select: { fullName: true } },
+      },
+      orderBy: [{ obtainedMarks: 'desc' }, { timeSpentSeconds: 'asc' }, { submittedAt: 'asc' }],
+    });
+    const ranked = rankAttempts(
+      attempts.map(({ user: u, ...a }) => ({ ...a, fullName: u.fullName })),
+    );
+    const mine = ranked.find((a) => a.userId === user.id);
+    const toEntry = (a: (typeof ranked)[number]) => ({
+      rank: a.rank,
+      name: displayName(a.fullName),
+      obtainedMarks: a.obtainedMarks,
+      percentage: a.percentage,
+      timeSpentSeconds: a.timeSpentSeconds,
+      isMe: a.userId === user.id,
+    });
+    return {
+      examId: exam.id,
+      examTitle: exam.title,
+      participants: ranked.length,
+      top: ranked.slice(0, limit).map(toEntry),
+      me: mine ? { ...toEntry(mine), topPercent: topPercent(mine.rank, ranked.length) } : null,
+    };
   }
 
   private async toCards(user: AuthUser, exams: ExamWithCount[]) {

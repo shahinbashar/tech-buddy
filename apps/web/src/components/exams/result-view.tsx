@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { ErrorState } from '@/components/common/error-state';
 import { ListSkeleton } from '@/components/common/list-skeleton';
 import { PageHeader } from '@/components/common/page-header';
+import { LeaderboardCard } from '@/components/exams/leaderboard-card';
 import { ResultNextSteps } from '@/components/exams/result-next-steps';
 import { ResultSummary } from '@/components/exams/result-summary';
 import { ReviewQuestionCard } from '@/components/exams/review-question-card';
@@ -76,7 +77,10 @@ export function ResultView({ attemptId }: { attemptId: string }) {
         canRetake={Boolean(data.exam.allowMultipleAttempts)}
         hasMistakes={data.result.incorrectCount + data.result.unansweredCount > 0}
       />
-      <SubjectBreakdownTable rows={data.subjectBreakdown} />
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SubjectBreakdownTable rows={data.subjectBreakdown} />
+        {data.exam.type !== 'PRACTICE' && <LeaderboardCard examId={data.exam.id} />}
+      </div>
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -2,6 +2,7 @@ import type {
   CircularCategory,
   Difficulty,
   EmploymentType,
+  ExamType,
   JobType,
   PreparationGoal,
   SubjectCategory,
@@ -89,3 +90,9 @@ export const DIFFICULTY_OPTIONS = Object.entries(DIFFICULTY_LABELS).map(([value,
   value,
   label,
 }));
+
+export const EXAM_TYPE_LABELS: Record<ExamType, string> = {
+  DAILY: 'Daily exam',
+  MODEL: 'Model test',
+  PRACTICE: 'Practice',
+};

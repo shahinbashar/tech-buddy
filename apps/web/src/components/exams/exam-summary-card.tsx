@@ -4,6 +4,7 @@ import { ExamActionButton } from '@/components/exams/exam-action-button';
 import { ExamMeta } from '@/components/exams/exam-meta';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { EXAM_TYPE_LABELS } from '@/lib/constants';
 import { formatPercent } from '@/lib/format';
 import type { ExamCard } from '@/types/api';
 
@@ -19,7 +20,7 @@ export function ExamSummaryCard({
       <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{exam.type === 'DAILY' ? 'Daily exam' : 'Model test'}</Badge>
+            <Badge variant="secondary">{EXAM_TYPE_LABELS[exam.type]}</Badge>
             <AccessBadge level={exam.accessLevel} locked={exam.isLocked} />
             {exam.bestPercentage !== null && (
               <Badge variant="success">Best: {formatPercent(exam.bestPercentage)}</Badge>

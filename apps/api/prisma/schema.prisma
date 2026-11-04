@@ -67,6 +67,8 @@ enum Difficulty {
 enum ExamType {
   DAILY
   MODEL
+  /// Private, user-generated practice set (never listed publicly or ranked).
+  PRACTICE
 }
 
 enum AttemptStatus {
@@ -115,6 +117,8 @@ model User {
   entitlements        PremiumEntitlement[] @relation("EntitlementUser")
   grantedEntitlements PremiumEntitlement[] @relation("EntitlementGrantedBy")
   payments            Payment[]
+  practiceExams       Exam[]               @relation("PracticeExams")
+  savedCirculars      SavedCircular[]
 
   @@index([role])
   @@index([createdAt])
@@ -147,10 +151,24 @@ model JobCircular {
   updatedAt                DateTime         @updatedAt
 
   attachments Attachment[]
+  savedBy     SavedCircular[]
 
   @@index([isPublished, applicationDeadline])
   @@index([category])
   @@index([isFeatured])
+}
+
+/// A circular bookmarked by a user to track its deadline.
+model SavedCircular {
+  id         String      @id @default(cuid())
+  userId     String
+  circularId String
+  createdAt  DateTime    @default(now())
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circular   JobCircular @relation(fields: [circularId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, circularId])
+  @@index([circularId])
 }
 
 /// Uploaded file (PDF/image) attached to a circular or a note.
@@ -316,13 +334,17 @@ model Exam {
   allowMultipleAttempts Boolean     @default(false)
   accessLevel           AccessLevel @default(FREE)
   isPublished           Boolean     @default(false)
+  /// Set for PRACTICE exams: only this user can see or attempt them.
+  ownerId               String?
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
+  owner     User?          @relation("PracticeExams", fields: [ownerId], references: [id], onDelete: Cascade)
   questions ExamQuestion[]
   attempts  ExamAttempt[]
 
   @@index([isPublished, examDate])
+  @@index([ownerId])
 }
 
 model ExamQuestion {

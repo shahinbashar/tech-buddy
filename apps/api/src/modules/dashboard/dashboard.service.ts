@@ -21,35 +21,62 @@ export class DashboardService {
 
   async userDashboard(userId: string) {
     const submitted = { userId, status: 'SUBMITTED' as const };
-    const [attempts, subjectGroups, topicGroups, progress, completions] = await Promise.all([
-      this.prisma.examAttempt.findMany({
-        where: submitted,
-        select: {
-          id: true,
-          examTitle: true,
-          submittedAt: true,
-          percentage: true,
-          obtainedMarks: true,
-          totalMarks: true,
-          correctCount: true,
-          incorrectCount: true,
-          unansweredCount: true,
-        },
-        orderBy: { submittedAt: 'asc' },
-      }),
-      this.prisma.examAnswer.groupBy({
-        by: ['subjectName', 'isCorrect'],
-        where: { attempt: submitted },
-        _count: { _all: true },
-      }),
-      this.prisma.examAnswer.groupBy({
-        by: ['topicId', 'topicName', 'subjectName', 'isCorrect'],
-        where: { attempt: submitted, topicId: { not: null } },
-        _count: { _all: true },
-      }),
-      this.progressService.overview(userId),
-      this.prisma.userTopicProgress.findMany({ where: { userId }, select: { completedAt: true } }),
-    ]);
+    const now = new Date();
+    const [attempts, subjectGroups, topicGroups, progress, completions, closingSoon] =
+      await Promise.all([
+        this.prisma.examAttempt.findMany({
+          where: submitted,
+          select: {
+            id: true,
+            examTitle: true,
+            submittedAt: true,
+            percentage: true,
+            obtainedMarks: true,
+            totalMarks: true,
+            correctCount: true,
+            incorrectCount: true,
+            unansweredCount: true,
+          },
+          orderBy: { submittedAt: 'asc' },
+        }),
+        this.prisma.examAnswer.groupBy({
+          by: ['subjectName', 'isCorrect'],
+          where: { attempt: submitted },
+          _count: { _all: true },
+        }),
+        this.prisma.examAnswer.groupBy({
+          by: ['topicId', 'topicName', 'subjectName', 'isCorrect'],
+          where: { attempt: submitted, topicId: { not: null } },
+          _count: { _all: true },
+        }),
+        this.progressService.overview(userId),
+        this.prisma.userTopicProgress.findMany({
+          where: { userId },
+          select: { completedAt: true },
+        }),
+        this.prisma.savedCircular.findMany({
+          where: {
+            userId,
+            circular: {
+              isPublished: true,
+              applicationDeadline: { gte: now, lte: new Date(now.getTime() + 7 * DAY_MS) },
+            },
+          },
+          select: {
+            circular: {
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                organizationName: true,
+                applicationDeadline: true,
+              },
+            },
+          },
+          orderBy: { circular: { applicationDeadline: 'asc' } },
+          take: 5,
+        }),
+      ]);
 
     const totals = attempts.reduce(
       (acc, a) => ({
@@ -143,6 +170,7 @@ export class DashboardService {
         })),
       weakTopics,
       recentAttempts: attempts.slice(-5).reverse(),
+      savedClosingSoon: closingSoon.map((s) => s.circular),
     };
   }
 
@@ -197,7 +225,7 @@ export class DashboardService {
       this.prisma.note.count(),
       this.prisma.question.count(),
       this.prisma.question.count({ where: { isPublished: true } }),
-      this.prisma.exam.count(),
+      this.prisma.exam.count({ where: { ownerId: null } }),
       this.prisma.examAttempt.count({ where: { startedAt: { gte: startOfToday } } }),
       this.prisma.user.count({ where: { entitlements: { some: activeEntitlementWhere(now) } } }),
       this.prisma.user.findMany({

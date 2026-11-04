@@ -16,7 +16,7 @@ export type CircularCategory =
 export type CircularStatus = 'draft' | 'upcoming' | 'open' | 'closed';
 export type SubjectCategory = 'GENERAL' | 'TECHNICAL';
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
-export type ExamType = 'DAILY' | 'MODEL';
+export type ExamType = 'DAILY' | 'MODEL' | 'PRACTICE';
 export type AttemptStatus = 'IN_PROGRESS' | 'SUBMITTED';
 export type PreparationGoal =
   | 'GOVERNMENT_IT'
@@ -86,6 +86,12 @@ export interface CircularDetail extends CircularSummary {
   attachments: Attachment[];
   createdAt: string;
   updatedAt: string;
+  /** Only meaningful for signed-in visitors. */
+  isSaved?: boolean;
+}
+
+export interface SavedCircular extends CircularSummary {
+  savedAt: string;
 }
 
 export interface CircularStats {
@@ -350,6 +356,13 @@ export interface UserDashboard {
     topicSlug: string | null;
     subjectSlug: string | null;
   }[];
+  savedClosingSoon: {
+    id: string;
+    slug: string;
+    title: string;
+    organizationName: string;
+    applicationDeadline: string;
+  }[];
   recentAttempts: {
     id: string;
     examTitle: string;
@@ -522,7 +535,8 @@ export interface AdminExamRow {
   id: string;
   title: string;
   description: string | null;
-  type: ExamType;
+  /** Practice sets are private and never appear in admin lists. */
+  type: Exclude<ExamType, 'PRACTICE'>;
   examDate: string;
   durationMinutes: number;
   marksPerQuestion: number;
@@ -539,4 +553,29 @@ export interface AdminExamRow {
 
 export interface AdminExam extends Omit<AdminExamRow, 'questionCount'> {
   questions: AdminQuestion[];
+}
+
+// ── Practice & leaderboard ──
+export type PracticeMode = 'random' | 'mistakes';
+
+export interface PracticeCreated {
+  attemptId: string;
+  questionCount: number;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  obtainedMarks: number;
+  percentage: number;
+  timeSpentSeconds: number;
+  isMe: boolean;
+}
+
+export interface Leaderboard {
+  examId: string;
+  examTitle: string;
+  participants: number;
+  top: LeaderboardEntry[];
+  me: (LeaderboardEntry & { topPercent: number }) | null;
 }

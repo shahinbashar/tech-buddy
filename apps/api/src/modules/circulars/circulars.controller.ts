@@ -8,10 +8,13 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { type AuthUser } from '../../common/types/auth-user';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CircularsService } from './circulars.service';
 import { CreateCircularDto, UpdateCircularDto } from './dto/circular.dto';
@@ -34,10 +37,30 @@ export class CircularsController {
     return this.circularsService.summary();
   }
 
+  @ApiBearerAuth()
+  @Get('saved')
+  saved(@CurrentUser() user: AuthUser) {
+    return this.circularsService.listSaved(user.id);
+  }
+
+  @ApiBearerAuth()
+  @Put(':id/save')
+  save(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.circularsService.save(user.id, id);
+  }
+
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id/save')
+  unsave(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.circularsService.unsave(user.id, id);
+  }
+
+  /** Must stay last: `:slug` would otherwise shadow `saved`. */
   @Public()
   @Get(':slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.circularsService.findPublicBySlug(slug);
+  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: AuthUser) {
+    return this.circularsService.findPublicBySlug(slug, user?.id);
   }
 }
 

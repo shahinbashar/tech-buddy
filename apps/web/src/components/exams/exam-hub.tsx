@@ -1,13 +1,16 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Dumbbell } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/empty-state';
 import { ErrorState } from '@/components/common/error-state';
 import { ListSkeleton } from '@/components/common/list-skeleton';
 import { Pager } from '@/components/common/pager';
 import { ExamSummaryCard } from '@/components/exams/exam-summary-card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import type { ExamCard, Paginated } from '@/types/api';
@@ -62,9 +65,30 @@ function RecentExams() {
   );
 }
 
+function PracticeCta() {
+  return (
+    <Card className="bg-accent/40 border-accent gap-0 py-4">
+      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold">Want more practice?</p>
+          <p className="text-muted-foreground text-sm">
+            Build a set by subject or topic, or drill the questions you got wrong.
+          </p>
+        </div>
+        <Button asChild variant="success">
+          <Link href="/exams/practice">
+            <Dumbbell /> Practice mode
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ExamHub() {
   return (
     <div className="space-y-8">
+      <PracticeCta />
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Today</h2>
         <TodayExams />

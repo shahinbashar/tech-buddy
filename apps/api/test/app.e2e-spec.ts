@@ -283,4 +283,137 @@ describe('Tech Buddy API (e2e)', () => {
       expect(expired.body.result.unansweredCount).toBe(expired.body.result.totalQuestions);
     });
   });
+
+  describe('audit features', () => {
+    it('saves circulars and lists them closing soonest first', async () => {
+      const circular = await prisma.jobCircular.create({
+        data: {
+          slug: `saved-${RUN}`,
+          organizationName: 'E2E Org',
+          title: 'Programmer',
+          publishedDate: new Date(),
+          applicationStartDate: new Date(),
+          applicationDeadline: new Date(Date.now() + 3 * 86_400_000),
+          isPublished: true,
+        },
+      });
+      const { agent: user } = await registeredAgent();
+      await user.put(`/api/circulars/${circular.id}/save`).expect(200);
+      await user.put(`/api/circulars/${circular.id}/save`).expect(200); // idempotent
+
+      const detail = await user.get(`/api/circulars/${circular.slug}`).expect(200);
+      expect(detail.body.isSaved).toBe(true);
+      const saved = await user.get('/api/circulars/saved').expect(200);
+      expect((saved.body as { id: string }[]).map((c) => c.id)).toEqual([circular.id]);
+      const dashboard = await user.get('/api/dashboard/me').expect(200);
+      expect(dashboard.body.savedClosingSoon[0].id).toBe(circular.id);
+
+      await user.delete(`/api/circulars/${circular.id}/save`).expect(204);
+      expect((await user.get('/api/circulars/saved')).body).toEqual([]);
+      await agent().get('/api/circulars/saved').expect(401);
+    });
+
+    it('creates private practice sets, including a "my mistakes" set', async () => {
+      const { agent: user } = await registeredAgent();
+      await user.post('/api/practice').send({ mode: 'mistakes', questionCount: 5 }).expect(400);
+
+      // Answer today's exam wrong so there are mistakes to practise.
+      const [exam] = (await user.get('/api/exams/today')).body as { id: string }[];
+      const { attemptId } = (await user.post(`/api/exams/${exam.id}/attempts`)).body as {
+        attemptId: string;
+      };
+      const view = await user.get(`/api/attempts/${attemptId}`);
+      type Q = { answerId: string; options: { id: string; text: string }[] };
+      const answers = (view.body.questions as Q[]).map((q) => ({
+        answerId: q.answerId,
+        selectedOptionId: q.options.find((o) => /^B\d$/.test(o.text))!.id,
+      }));
+      await user.post(`/api/attempts/${attemptId}/submit`).send({ answers }).expect(200);
+
+      const mistakes = await user
+        .post('/api/practice')
+        .send({ mode: 'mistakes', questionCount: 5 })
+        .expect(201);
+      expect(mistakes.body.questionCount).toBe(answers.length);
+      const practiceView = await user.get(`/api/attempts/${mistakes.body.attemptId}`).expect(200);
+      expect(practiceView.body.examTitle).toMatch(/^Mistakes practice/);
+
+      const random = await user.post('/api/practice').send({ questionCount: 5 }).expect(201);
+      expect(random.body.questionCount).toBe(5);
+
+      // Practice sets are private: not listed publicly, not visible to others, not ranked.
+      const practiceExamId = practiceView.body.exam.id as string;
+      const listed = (await user.get('/api/exams?pageSize=100')).body.items as { id: string }[];
+      expect(listed.some((e) => e.id === practiceExamId)).toBe(false);
+      const { agent: other } = await registeredAgent();
+      await other.get(`/api/exams/${practiceExamId}`).expect(404);
+      await other.post(`/api/exams/${practiceExamId}/attempts`).expect(404);
+      await user.get(`/api/exams/${practiceExamId}/leaderboard`).expect(404);
+    });
+
+    it('ranks first attempts on the leaderboard', async () => {
+      const { agent: user } = await registeredAgent();
+      const [exam] = (await user.get('/api/exams/today')).body as { id: string }[];
+      const { attemptId } = (await user.post(`/api/exams/${exam.id}/attempts`)).body as {
+        attemptId: string;
+      };
+      await user.post(`/api/attempts/${attemptId}/submit`).send({}).expect(200);
+
+      const board = await user.get(`/api/exams/${exam.id}/leaderboard`).expect(200);
+      expect(board.body.participants).toBeGreaterThanOrEqual(1);
+      expect(board.body.me).toMatchObject({ isMe: true, name: 'E2E U.' });
+      expect(board.body.me.topPercent).toBeGreaterThan(0);
+      expect(JSON.stringify(board.body)).not.toMatch(/userId|@e2e\.test/);
+    });
+  });
+
+  describe('mobile token auth', () => {
+    it('issues bearer + refresh tokens, rotates them, and never accepts a refresh token as access', async () => {
+      const email = `mobile-${RUN}@e2e.test`;
+      const registered = await agent()
+        .post('/api/auth/mobile/register')
+        .send({ fullName: 'Mobile User', email, password: 'Secret123' })
+        .expect(201);
+      expect(registered.headers['set-cookie']).toBeUndefined();
+      const { accessToken, refreshToken } = registered.body as {
+        accessToken: string;
+        refreshToken: string;
+      };
+      expect(accessToken).toBeTruthy();
+      expect(refreshToken).toBeTruthy();
+
+      await agent().get('/api/auth/me').set('Authorization', `Bearer ${accessToken}`).expect(200);
+      await agent().get('/api/auth/me').set('Authorization', `Bearer ${refreshToken}`).expect(401);
+
+      const refreshed = await agent()
+        .post('/api/auth/mobile/refresh')
+        .send({ refreshToken })
+        .expect(200);
+      await agent()
+        .get('/api/dashboard/me')
+        .set('Authorization', `Bearer ${refreshed.body.accessToken}`)
+        .expect(200);
+      await agent()
+        .post('/api/auth/mobile/refresh')
+        .send({ refreshToken: accessToken })
+        .expect(401);
+
+      // Changing the password revokes every session, including mobile refresh tokens.
+      await agent()
+        .post('/api/auth/password')
+        .set('Authorization', `Bearer ${refreshed.body.accessToken}`)
+        .send({ currentPassword: 'Secret123', newPassword: 'Changed123' })
+        .expect(204);
+      await agent()
+        .post('/api/auth/mobile/refresh')
+        .send({ refreshToken: refreshed.body.refreshToken })
+        .expect(401);
+
+      const login = await agent()
+        .post('/api/auth/mobile/login')
+        .send({ email, password: 'Changed123' })
+        .expect(200);
+      expect(login.body.user.email).toBe(email);
+    });
+  });
 });

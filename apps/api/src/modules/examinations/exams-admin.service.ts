@@ -28,9 +28,11 @@ export class ExamsAdminService {
   }
 
   async list(query: PaginationQueryDto) {
-    const where: Prisma.ExamWhereInput = query.search
-      ? { title: { contains: query.search, mode: 'insensitive' } }
-      : {};
+    // Private practice sets belong to users and are not managed here.
+    const where: Prisma.ExamWhereInput = {
+      ownerId: null,
+      ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
+    };
     const [items, total] = await this.prisma.$transaction([
       this.prisma.exam.findMany({
         where,

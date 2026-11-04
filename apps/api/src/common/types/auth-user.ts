@@ -13,6 +13,8 @@ export interface JwtPayload {
   role: Role;
   /** User.sessionVersion at issue time; a mismatch means the session was revoked. */
   sv: number;
+  /** Present only on refresh tokens, which must never be accepted as access tokens. */
+  typ?: 'refresh';
 }
 
 export const AUTH_COOKIE_NAME = 'tb_access_token';

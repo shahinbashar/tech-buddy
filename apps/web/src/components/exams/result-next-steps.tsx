@@ -1,4 +1,4 @@
-import { LayoutDashboard, RotateCcw, Target } from 'lucide-react';
+import { Dumbbell, LayoutDashboard, RotateCcw, Target } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,6 +22,13 @@ export function ResultNextSteps({ examId, canRetake, hasMistakes }: ResultNextSt
         <div className="flex flex-wrap gap-2">
           {hasMistakes && (
             <Button asChild size="sm">
+              <Link href="/exams/practice">
+                <Dumbbell /> Practise mistakes
+              </Link>
+            </Button>
+          )}
+          {hasMistakes && (
+            <Button asChild size="sm" variant="outline">
               <Link href="/dashboard#weak-topics">
                 <Target /> Weak topics
               </Link>

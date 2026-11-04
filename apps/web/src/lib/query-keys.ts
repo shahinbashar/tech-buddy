@@ -9,6 +9,8 @@ export const queryKeys = {
   attempt: (id: string) => ['attempts', id] as const,
   history: (page: number) => ['attempts', 'history', page] as const,
   premiumMe: ['premium', 'me'] as const,
+  savedCirculars: ['circulars', 'saved'] as const,
+  leaderboard: (examId: string) => ['exams', 'leaderboard', examId] as const,
   plans: ['premium', 'plans'] as const,
   subjectsPublic: ['subjects', 'public'] as const,
   admin: {

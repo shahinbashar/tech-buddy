@@ -6,6 +6,7 @@ import { cache } from 'react';
 import { AttachmentList } from '@/components/circulars/attachment-list';
 import { CircularInfoRow } from '@/components/circulars/circular-info-row';
 import { DeadlineBadge } from '@/components/circulars/deadline-badge';
+import { SaveCircularButton } from '@/components/circulars/save-circular-button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { serverApiOrNull } from '@/lib/api-server';
 import { CIRCULAR_CATEGORY_LABELS, EMPLOYMENT_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/constants';
 import { formatDate, formatDateTime } from '@/lib/format';
+import { getSessionUser } from '@/lib/session';
 import type { CircularDetail } from '@/types/api';
 
 const getCircular = cache((slug: string) =>
@@ -38,7 +40,7 @@ export default async function CircularDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const circular = await getCircular((await params).slug);
+  const [circular, user] = await Promise.all([getCircular((await params).slug), getSessionUser()]);
   if (!circular) notFound();
   const isClosed = circular.status === 'closed';
 
@@ -71,6 +73,12 @@ export default async function CircularDetailPage({
             )}
           </span>
         </p>
+        <SaveCircularButton
+          circularId={circular.id}
+          slug={circular.slug}
+          initialSaved={Boolean(circular.isSaved)}
+          isSignedIn={Boolean(user)}
+        />
       </header>
 
       {isClosed && (

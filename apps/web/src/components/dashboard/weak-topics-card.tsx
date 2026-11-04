@@ -1,5 +1,6 @@
 import { BookOpen, Target } from 'lucide-react';
 import Link from 'next/link';
+import { PracticeTopicButton } from '@/components/exams/practice-topic-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,7 @@ function WeakTopicRow({ topic }: { topic: WeakTopic }) {
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Badge variant="destructive">{formatPercent(topic.accuracy)}</Badge>
+        <PracticeTopicButton topicId={topic.topicId} topicName={topic.topicName} />
         {href && (
           <Button asChild size="sm" variant="ghost" aria-label={`Revise ${topic.topicName}`}>
             <Link href={href}>

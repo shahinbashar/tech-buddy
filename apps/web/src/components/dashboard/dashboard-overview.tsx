@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/common/error-state';
 import { CardGridSkeleton } from '@/components/common/list-skeleton';
 import { StatCard } from '@/components/common/stat-card';
 import { AnswerBreakdownChart } from '@/components/dashboard/answer-breakdown-chart';
+import { ClosingSoonCard } from '@/components/dashboard/closing-soon-card';
 import { PerformanceChart } from '@/components/dashboard/performance-chart';
 import { RecentAttemptsCard } from '@/components/dashboard/recent-attempts-card';
 import { SubjectPerformanceChart } from '@/components/dashboard/subject-performance-chart';
@@ -50,6 +51,8 @@ export function DashboardOverview({ needsGoal }: { needsGoal: boolean }) {
           </AlertDescription>
         </Alert>
       )}
+
+      <ClosingSoonCard circulars={data.savedClosingSoon} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard

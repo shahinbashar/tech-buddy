@@ -10,7 +10,8 @@ admin-managed premium access.
 | API (`apps/api`) | NestJS 11, Prisma 6, PostgreSQL 16, JWT (httpOnly cookie), class-validator, Swagger, Throttler, Helmet                             |
 | Tooling          | pnpm workspaces, Docker Compose (PostgreSQL), ESLint 9, Prettier, Jest (API), Vitest (web)                                         |
 
-Architecture, entities, scope decisions and risks: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+Architecture, entities, scope decisions and risks: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** ·
+Code review findings: **[docs/REVIEW.md](docs/REVIEW.md)** · Competitive audit: **[docs/PRODUCT_AUDIT.md](docs/PRODUCT_AUDIT.md)**.
 
 ---
 
@@ -86,7 +87,12 @@ pnpm dev
 - **Results** — marks, percentage, accuracy, time spent, subject breakdown, correct answer + explanation per question.
 - **Dashboard** — exams taken, average/best score, accuracy, topic completion, streak, score trend, subject-wise
   performance, correct vs incorrect, weak topics.
-- Exam history, learning progress (completed/pending topics), premium status, profile & password.
+- **Practice mode** — private practice sets by subject/topic, or **"my mistakes"** (questions you last answered
+  wrong); one-click practice from any weak topic.
+- **Merit list** — rank, participants and "top N%" for each daily exam (first attempts only, privacy-friendly names).
+- **Saved circulars** — bookmark circulars; the dashboard highlights saved ones closing within 7 days.
+- Exam history, learning progress (completed/pending topics), premium status, profile & password
+  (changing it signs out all other devices).
 
 ### Admin
 
@@ -126,12 +132,27 @@ random file names · Markdown rendered without raw HTML · deactivated users los
 pnpm test
 ```
 
+```bash
+pnpm --filter api test:e2e
+```
+
+- **API e2e (Jest + Supertest, real Postgres):** runs against an isolated `e2e` schema (migrations applied with the
+  non-destructive `migrate deploy`; data is unique per run). Covers auth & cookies, RBAC, session revocation,
+  premium gating, the full exam lifecycle (races, expiry, answer leakage), practice, leaderboard, saved circulars
+  and mobile token auth.
+
 - **API (Jest):** scoring & negative marking, attempt snapshot building (no answer leakage), shuffle fairness, circular
   status, Dhaka date helpers, streak calculation, CSV parsing/validation, upload validation, entitlement status, Prisma
   error mapping.
 - **Web (Vitest):** deadline badges, Dhaka datetime conversion, countdown formatting, form schemas, safe redirects.
 
 ---
+
+## Mobile API (token auth)
+
+Native clients use `POST /api/auth/mobile/register|login` → `{ user, accessToken, refreshToken }`, send
+`Authorization: Bearer <accessToken>`, and rotate tokens with `POST /api/auth/mobile/refresh { refreshToken }`.
+Refresh tokens are rejected as access tokens and are revoked together with web sessions.
 
 ## Project structure
 

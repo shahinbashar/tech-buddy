@@ -59,6 +59,7 @@ export class JwtAuthGuard implements CanActivate {
     let payload: JwtPayload;
     try {
       payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+      if (payload.typ === 'refresh') return null;
     } catch {
       // Invalid/expired tokens are an expected condition, not an error to log.
       return null;
