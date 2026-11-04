@@ -819,6 +819,17 @@ async function seedLearning(): Promise<Map<string, string>> {
   return topicIds;
 }
 
+/**
+ * Demo past papers, so the previous-year practice feature has data. Labelled as samples: they
+ * are not real exam papers.
+ */
+const SAMPLE_PAPER_BY_SUBJECT: Record<string, string> = {
+  'computer-science': 'Sample paper · Assistant Programmer',
+  ict: 'Sample paper · Computer Operator',
+  english: 'Sample paper · Computer Operator',
+  mathematics: 'Sample paper · Computer Operator',
+};
+
 async function seedQuestions(topicIds: Map<string, string>): Promise<void> {
   const subjects = new Map((await prisma.subject.findMany()).map((s) => [s.slug, s.id]));
   let created = 0;
@@ -832,7 +843,14 @@ async function seedQuestions(topicIds: Map<string, string>): Promise<void> {
     explanation,
     access,
   ] of QUESTIONS) {
-    if (await prisma.question.findFirst({ where: { text } })) continue;
+    const reference = SAMPLE_PAPER_BY_SUBJECT[subjectSlug] ?? null;
+    const existing = await prisma.question.findFirst({ where: { text } });
+    if (existing) {
+      // Older seeds predate sample papers; backfill without touching admin edits.
+      if (reference && existing.reference === null)
+        await prisma.question.update({ where: { id: existing.id }, data: { reference } });
+      continue;
+    }
     await prisma.question.create({
       data: {
         subjectId: subjects.get(subjectSlug)!,
@@ -840,6 +858,7 @@ async function seedQuestions(topicIds: Map<string, string>): Promise<void> {
         difficulty,
         text,
         explanation,
+        reference,
         accessLevel: access ?? 'FREE',
         isPublished: true,
         options: {

@@ -275,5 +275,25 @@
     "markComplete": "Mark as complete",
     "completedTapToUndo": "Completed · tap to undo",
     "practiseThisTopic": "Practise this topic",
-    "revise": "Revise"
+    "revise": "Revise",
+    "pastPapers": "Past papers",
+    "pastPaperQuestions": "{count} questions",
+    "@pastPaperQuestions": {
+        "placeholders": {
+            "count": {
+                "type": "String"
+            }
+        }
+    },
+    "pastPaperPartial": "{available} of {total} questions on your plan",
+    "@pastPaperPartial": {
+        "placeholders": {
+            "available": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    }
 }

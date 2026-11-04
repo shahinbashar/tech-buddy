@@ -38,14 +38,30 @@ final class ExamRepositoryImpl extends Repository implements ExamRepository {
     required bool mistakesOnly,
     int questionCount = 10,
     String? topicId,
+    String? reference,
   }) {
     return asyncGuard(() async {
       final response = await remote.startPractice({
         'mode': mistakesOnly ? 'mistakes' : 'random',
         'questionCount': questionCount,
         'topicId': ?topicId,
+        'reference': ?reference,
       });
       return (response.data as Map<String, dynamic>)['attemptId'] as String;
+    });
+  }
+
+  @override
+  Future<Result<List<PracticeSourceEntity>, BusinessFailure>>
+  getPracticeSources() {
+    return asyncGuard(() async {
+      final response = await remote.practiceSources();
+      return [
+        for (final item in response.data as List<dynamic>)
+          _mapper.toPracticeSource(
+            PracticeSourceModel.fromJson(item as Map<String, dynamic>),
+          ),
+      ];
     });
   }
 

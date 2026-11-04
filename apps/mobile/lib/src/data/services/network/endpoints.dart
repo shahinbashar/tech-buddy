@@ -37,4 +37,5 @@ class Endpoints {
   static const String attemptAnswers = '/attempts/{id}/answers';
   static const String attemptSubmit = '/attempts/{id}/submit';
   static const String practice = '/practice';
+  static const String practiceSources = '/practice/sources';
 }

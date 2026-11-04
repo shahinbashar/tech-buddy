@@ -27,6 +27,12 @@ Future<SubmittedAttemptEntity> attemptResult(Ref ref, String attemptId) async {
 }
 
 @riverpod
+Future<List<PracticeSourceEntity>> practiceSources(Ref ref) async {
+  return (await ref.watch(getPracticeSourcesUseCaseProvider).call())
+      .getOrThrow();
+}
+
+@riverpod
 Future<LeaderboardEntity> leaderboard(Ref ref, String examId) async {
   return (await ref.watch(getLeaderboardUseCaseProvider).call(examId))
       .getOrThrow();
@@ -45,10 +51,17 @@ class ExamLauncher extends _$ExamLauncher {
   Future<String?> startPractice({
     required bool mistakesOnly,
     String? topicId,
+    String? reference,
+    int questionCount = 10,
   }) => _run(
     () => ref
         .read(startPracticeUseCaseProvider)
-        .call(mistakesOnly: mistakesOnly, topicId: topicId),
+        .call(
+          mistakesOnly: mistakesOnly,
+          topicId: topicId,
+          reference: reference,
+          questionCount: questionCount,
+        ),
   );
 
   Future<String?> _run(

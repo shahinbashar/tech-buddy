@@ -50,6 +50,13 @@ class ExamMapper {
     );
   }
 
+  PracticeSourceEntity toPracticeSource(PracticeSourceModel model) =>
+      PracticeSourceEntity(
+        reference: model.reference,
+        questionCount: model.questionCount,
+        availableCount: model.availableCount,
+      );
+
   LeaderboardEntity toLeaderboard(LeaderboardModel model) => LeaderboardEntity(
     participants: model.participants,
     top: [

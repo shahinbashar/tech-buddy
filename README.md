@@ -89,6 +89,8 @@ pnpm dev
   performance, correct vs incorrect, weak topics.
 - **Practice mode** — private practice sets by subject/topic, or **"my mistakes"** (questions you last answered
   wrong); one-click practice from any weak topic.
+- **Past papers** — practise a previous exam paper as one set (questions grouped by their `reference`); premium-only
+  papers are shown locked.
 - **Merit list** — rank, participants and "top N%" for each daily exam (first attempts only, privacy-friendly names).
 - **Saved circulars** — bookmark circulars; the dashboard highlights saved ones closing within 7 days.
 - Exam history, learning progress (completed/pending topics), premium status, profile & password
@@ -138,8 +140,8 @@ pnpm --filter api test:e2e
 
 - **API e2e (Jest + Supertest, real Postgres):** runs against an isolated `e2e` schema (migrations applied with the
   non-destructive `migrate deploy`; data is unique per run). Covers auth & cookies, RBAC, session revocation,
-  premium gating, the full exam lifecycle (races, expiry, answer leakage), practice, leaderboard, saved circulars
-  and mobile token auth.
+  premium gating, the full exam lifecycle (races, expiry, answer leakage), practice and past papers, leaderboard,
+  saved circulars and mobile token auth.
 
 - **API (Jest):** scoring & negative marking, attempt snapshot building (no answer leakage), shuffle fairness, circular
   status, Dhaka date helpers, streak calculation, CSV parsing/validation, upload validation, entitlement status, Prisma
@@ -158,16 +160,17 @@ Refresh tokens are rejected as access tokens and are revoked together with web s
 
 ```
 apps/
-  api/   NestJS — prisma/ (schema, migrations, seed), src/common, src/modules/<feature>
-  web/   Next.js — src/app/(public|app|focus)/, src/app/admin/, src/components/<area>/, src/lib/
+  api/     NestJS — prisma/ (schema, migrations, seed), src/common, src/modules/<feature>
+  web/     Next.js — src/app/(public|app|focus)/, src/app/admin/, src/components/<area>/, src/lib/
+  mobile/  Flutter — candidate app (Home, Circulars, Study, Exams, Profile); see apps/mobile/README.md
 docs/ARCHITECTURE.md
 docker-compose.yml
 ```
 
 ## Out of scope for the MVP (intentionally)
 
-Automated circular scraping · payment gateway checkout · password-reset / email verification · saved circulars ·
-refresh-token rotation · full i18n · private-sector preparation tracks.
+Automated circular scraping · payment gateway checkout · password-reset / email verification · push notifications ·
+full i18n on the web · private-sector preparation tracks.
 
 ## Production notes
 

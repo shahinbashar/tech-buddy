@@ -10,12 +10,18 @@ abstract interface class ExamRepository {
   Future<Result<String, BusinessFailure>> startExam(String examId);
 
   /// Creates a private practice set from the user's mistakes (or random
-  /// questions) and starts it; returns the attempt id.
+  /// questions, optionally from one topic or past paper) and starts it;
+  /// returns the attempt id.
   Future<Result<String, BusinessFailure>> startPractice({
     required bool mistakesOnly,
     int questionCount = 10,
     String? topicId,
+    String? reference,
   });
+
+  /// Past papers available as practice sources.
+  Future<Result<List<PracticeSourceEntity>, BusinessFailure>>
+  getPracticeSources();
 
   Future<Result<AttemptEntity, BusinessFailure>> getAttempt(String attemptId);
 

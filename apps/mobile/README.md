@@ -11,7 +11,7 @@ Bootstrapped from **[momshaddinury/flutter_template](https://github.com/momshadd
 | **Home** | Today's exam, saved circulars closing within 7 days, streak, stats, weak topics with one-tap practice |
 | **Circulars** | Running and archived tabs, search, pagination, detail page with save, "apply online" and attachments |
 | **Study** | Subjects with progress, topic tree (premium topics marked), Markdown notes, mark complete, practise a topic, previous/next topic; weak topics on Home open their notes |
-| **Exams** | Start or resume the daily exam, "practise my mistakes", random practice |
+| **Exams** | Start or resume the daily exam, "practise my mistakes", random practice, past papers |
 | **Profile** | Saved circulars, language (English / বাংলা), logout |
 
 The exam runner corrects the countdown for device clock drift using the server time. It saves answers one request at a time, so they reach the server in order, and it auto-submits exactly once when time runs out. A leave guard warns before you exit. The result screen shows the score, the merit list (not for practice sets) and an answer review with explanations.

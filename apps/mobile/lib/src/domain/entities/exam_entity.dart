@@ -168,3 +168,24 @@ class LeaderboardEntity {
   final int? myRank;
   final int? myTopPercent;
 }
+
+/// A past paper the user can practise as a whole set.
+class PracticeSourceEntity {
+  const PracticeSourceEntity({
+    required this.reference,
+    required this.questionCount,
+    required this.availableCount,
+  });
+
+  final String reference;
+  final int questionCount;
+
+  /// Questions this user may draw: all with premium, free ones otherwise.
+  final int availableCount;
+
+  /// Every question in the paper is premium and the user has no access.
+  bool get isLocked => availableCount == 0;
+
+  /// Some, but not all, of the paper is available on the user's plan.
+  bool get isPartial => !isLocked && availableCount < questionCount;
+}

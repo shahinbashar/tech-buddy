@@ -194,5 +194,25 @@
     "markComplete": "সম্পন্ন হিসেবে চিহ্নিত করুন",
     "completedTapToUndo": "সম্পন্ন · বাতিল করতে ট্যাপ করুন",
     "practiseThisTopic": "এই টপিক অনুশীলন করুন",
-    "revise": "রিভিশন"
+    "revise": "রিভিশন",
+    "pastPapers": "বিগত বছরের প্রশ্ন",
+    "pastPaperQuestions": "{count}টি প্রশ্ন",
+    "@pastPaperQuestions": {
+        "placeholders": {
+            "count": {
+                "type": "String"
+            }
+        }
+    },
+    "pastPaperPartial": "আপনার প্ল্যানে {total}টির মধ্যে {available}টি প্রশ্ন",
+    "@pastPaperPartial": {
+        "placeholders": {
+            "available": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    }
 }

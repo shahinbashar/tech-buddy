@@ -8,6 +8,7 @@ import '../../../core/widgets/section_header.dart';
 import '../riverpod/exam_providers.dart';
 import '../widgets/exam_card_tile.dart';
 import '../widgets/launch_error_listener.dart';
+import '../widgets/past_papers_section.dart';
 import '../widgets/practice_actions.dart';
 
 class ExamsPage extends ConsumerWidget {
@@ -18,7 +19,10 @@ class ExamsPage extends ConsumerWidget {
     final exams = ref.watch(todayExamsProvider);
     return LaunchErrorListener(
       child: RefreshIndicator(
-        onRefresh: () => ref.refresh(todayExamsProvider.future),
+        onRefresh: () {
+          ref.invalidate(practiceSourcesProvider);
+          return ref.refresh(todayExamsProvider.future);
+        },
         child: ListView(
           padding: EdgeInsets.all(context.dimensions.space.s16),
           children: [
@@ -43,6 +47,7 @@ class ExamsPage extends ConsumerWidget {
             SizedBox(height: context.dimensions.space.s24),
             SectionHeader(title: context.locale.practise),
             const PracticeActions(),
+            const PastPapersSection(),
           ],
         ),
       ),

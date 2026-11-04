@@ -112,6 +112,11 @@ StartPracticeUseCase startPracticeUseCase(Ref ref) {
 }
 
 @riverpod
+GetPracticeSourcesUseCase getPracticeSourcesUseCase(Ref ref) {
+  return GetPracticeSourcesUseCase(ref.watch(examRepositoryProvider));
+}
+
+@riverpod
 GetAttemptUseCase getAttemptUseCase(Ref ref) {
   return GetAttemptUseCase(ref.watch(examRepositoryProvider));
 }

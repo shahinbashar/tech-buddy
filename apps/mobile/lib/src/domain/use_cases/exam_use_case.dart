@@ -30,7 +30,23 @@ final class StartPracticeUseCase {
   Future<Result<String, BusinessFailure>> call({
     required bool mistakesOnly,
     String? topicId,
-  }) => repository.startPractice(mistakesOnly: mistakesOnly, topicId: topicId);
+    String? reference,
+    int questionCount = 10,
+  }) => repository.startPractice(
+    mistakesOnly: mistakesOnly,
+    topicId: topicId,
+    reference: reference,
+    questionCount: questionCount,
+  );
+}
+
+final class GetPracticeSourcesUseCase {
+  const GetPracticeSourcesUseCase(this.repository);
+
+  final ExamRepository repository;
+
+  Future<Result<List<PracticeSourceEntity>, BusinessFailure>> call() =>
+      repository.getPracticeSources();
 }
 
 final class GetAttemptUseCase {

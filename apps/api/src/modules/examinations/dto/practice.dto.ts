@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Trim } from '../../../common/dto/transforms';
 
 export const PRACTICE_MODES = ['random', 'mistakes'] as const;
 export type PracticeMode = (typeof PRACTICE_MODES)[number];
@@ -23,6 +24,15 @@ export class CreatePracticeDto {
   @IsString()
   @IsOptional()
   topicId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Past paper to draw from — a `reference` listed by `GET /practice/sources`',
+  })
+  @Trim()
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  reference?: string;
 
   @ApiPropertyOptional({ minimum: 5, maximum: 50, default: 10 })
   @IsInt()

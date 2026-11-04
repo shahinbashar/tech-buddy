@@ -20,6 +20,7 @@ describe('Tech Buddy API (e2e)', () => {
   const RUN = Date.now().toString(36);
   const ADMIN = { email: `admin-${RUN}@e2e.test`, password: 'AdminPass123' };
   const SUBJECT_SLUG = `cs-${RUN}`;
+  const PAPER = `Past paper ${RUN}`;
   let counter = 0;
 
   const agent = () => request.agent(server);
@@ -79,6 +80,7 @@ describe('Tech Buddy API (e2e)', () => {
           topicId: topic.id,
           text: `Question ${i}?`,
           explanation: `Because ${i}`,
+          reference: PAPER,
           isPublished: true,
           accessLevel: i === 5 ? 'PREMIUM' : 'FREE',
           options: {
@@ -349,6 +351,35 @@ describe('Tech Buddy API (e2e)', () => {
       await other.get(`/api/exams/${practiceExamId}`).expect(404);
       await other.post(`/api/exams/${practiceExamId}/attempts`).expect(404);
       await user.get(`/api/exams/${practiceExamId}/leaderboard`).expect(404);
+    });
+
+    it('lists past papers and practises one, counting only accessible questions', async () => {
+      const { agent: user } = await registeredAgent();
+      const sources = (await user.get('/api/practice/sources').expect(200)).body as {
+        reference: string;
+        questionCount: number;
+        availableCount: number;
+      }[];
+      // Five free questions plus one premium question the free user cannot draw.
+      expect(sources.find((s) => s.reference === PAPER)).toEqual({
+        reference: PAPER,
+        questionCount: 6,
+        availableCount: 5,
+      });
+
+      const paper = await user
+        .post('/api/practice')
+        .send({ reference: `  ${PAPER} `, questionCount: 50 })
+        .expect(201);
+      expect(paper.body.questionCount).toBe(5);
+      const view = await user.get(`/api/attempts/${paper.body.attemptId}`).expect(200);
+      expect(view.body.examTitle).toBe(`Practice — ${PAPER}`);
+
+      await user
+        .post('/api/practice')
+        .send({ reference: `Unknown ${RUN}`, questionCount: 5 })
+        .expect(400);
+      await agent().get('/api/practice/sources').expect(401);
     });
 
     it('ranks first attempts on the leaderboard', async () => {

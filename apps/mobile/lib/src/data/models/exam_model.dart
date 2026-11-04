@@ -159,3 +159,18 @@ class LeaderboardModel with LeaderboardModelMappable {
 
   static const fromJson = LeaderboardModelMapper.fromJson;
 }
+
+@MappableClass(generateMethods: GenerateMethods.decode)
+class PracticeSourceModel with PracticeSourceModelMappable {
+  PracticeSourceModel({
+    required this.reference,
+    required this.questionCount,
+    required this.availableCount,
+  });
+
+  final String reference;
+  final int questionCount;
+  final int availableCount;
+
+  static const fromJson = PracticeSourceModelMapper.fromJson;
+}

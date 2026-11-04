@@ -71,6 +71,12 @@ export class ExamsController {
 export class PracticeController {
   constructor(private readonly practiceService: PracticeService) {}
 
+  /** Past papers available as practice sources, with how many questions the user can draw. */
+  @Get('sources')
+  sources(@CurrentUser() user: AuthUser) {
+    return this.practiceService.sources(user);
+  }
+
   /** Creates a personal practice set and starts it; returns the attempt to open. */
   @Post()
   create(@CurrentUser() user: AuthUser, @Body() dto: CreatePracticeDto) {

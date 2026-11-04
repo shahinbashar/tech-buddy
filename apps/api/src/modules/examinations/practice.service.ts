@@ -8,12 +8,20 @@ import { PremiumAccessService } from '../premium/premium-access.service';
 import { AttemptsService } from './attempts.service';
 import { type CreatePracticeDto } from './dto/practice.dto';
 
+export interface PracticeSource {
+  reference: string;
+  /** Published questions in the paper. */
+  questionCount: number;
+  /** Of those, how many this user may practise (all, or only free ones without premium). */
+  availableCount: number;
+}
+
 /** Seconds allowed per practice question (a little more generous than the daily exam). */
 const SECONDS_PER_QUESTION = 60;
 
 /**
- * Personal practice sets: random questions from a subject/topic, or the questions the user
- * most recently got wrong. They reuse the exam engine (snapshots, timer, server scoring) as
+ * Personal practice sets: random questions from a subject, topic or past paper, or the
+ * questions the user most recently got wrong. They reuse the exam engine (snapshots, timer, server scoring) as
  * private PRACTICE exams that are never listed publicly or ranked.
  */
 @Injectable()
@@ -36,6 +44,7 @@ export class PracticeService {
       ...(dto.topicId
         ? { OR: [{ topicId: dto.topicId }, { topic: { parentId: dto.topicId } }] }
         : {}),
+      ...(dto.reference ? { reference: dto.reference } : {}),
     };
 
     const candidateIds =
@@ -66,6 +75,33 @@ export class PracticeService {
     });
     const { attemptId } = await this.attempts.start(user, exam.id);
     return { attemptId, questionCount: questionIds.length };
+  }
+
+  /**
+   * Past papers (question `reference`s) with how many of their questions this user can
+   * practise. A paper whose questions are all premium is listed with `availableCount: 0`, so
+   * clients can show it as locked rather than hide it.
+   */
+  async sources(user: AuthUser): Promise<PracticeSource[]> {
+    const hasPremium = await this.premiumAccess.hasPremiumAccess(user);
+    const groups = await this.prisma.question.groupBy({
+      by: ['reference', 'accessLevel'],
+      where: { isPublished: true, reference: { not: null } },
+      _count: { _all: true },
+    });
+    const byReference = new Map<string, PracticeSource>();
+    for (const group of groups) {
+      if (!group.reference) continue;
+      const source = byReference.get(group.reference) ?? {
+        reference: group.reference,
+        questionCount: 0,
+        availableCount: 0,
+      };
+      source.questionCount += group._count._all;
+      if (hasPremium || group.accessLevel === 'FREE') source.availableCount += group._count._all;
+      byReference.set(group.reference, source);
+    }
+    return [...byReference.values()].sort((a, b) => a.reference.localeCompare(b.reference));
   }
 
   private async questionIds(scope: Prisma.QuestionWhereInput): Promise<string[]> {
@@ -99,6 +135,7 @@ export class PracticeService {
 
   private async title(dto: CreatePracticeDto): Promise<string> {
     const prefix = dto.mode === 'mistakes' ? 'Mistakes practice' : 'Practice';
+    if (dto.reference) return `${prefix} — ${dto.reference}`;
     if (dto.topicId) {
       const topic = await this.prisma.topic.findUnique({
         where: { id: dto.topicId },

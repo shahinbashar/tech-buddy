@@ -558,6 +558,14 @@ export interface AdminExam extends Omit<AdminExamRow, 'questionCount'> {
 // ── Practice & leaderboard ──
 export type PracticeMode = 'random' | 'mistakes';
 
+/** A past paper (question `reference`) usable as a practice source. */
+export interface PracticeSource {
+  reference: string;
+  questionCount: number;
+  /** Questions this user may draw: all with premium, free ones otherwise. */
+  availableCount: number;
+}
+
 export interface PracticeCreated {
   attemptId: string;
   questionCount: number;

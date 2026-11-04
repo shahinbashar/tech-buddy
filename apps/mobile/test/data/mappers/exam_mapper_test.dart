@@ -85,4 +85,20 @@ void main() {
     expect(submitted.questions.single.isCorrect, isFalse);
     expect(submitted.questions.single.explanation, 'Stack is LIFO.');
   });
+
+  test('past papers are locked, partial or fully available', () {
+    PracticeSourceEntity source(int available) => mapper.toPracticeSource(
+      PracticeSourceModel.fromJson({
+        'reference': 'Sample paper',
+        'questionCount': 10,
+        'availableCount': available,
+      }),
+    );
+
+    expect(source(0).isLocked, isTrue);
+    expect(source(0).isPartial, isFalse);
+    expect(source(4).isPartial, isTrue);
+    expect(source(10).isLocked, isFalse);
+    expect(source(10).isPartial, isFalse);
+  });
 }

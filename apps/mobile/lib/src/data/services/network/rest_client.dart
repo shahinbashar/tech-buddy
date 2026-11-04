@@ -118,4 +118,8 @@ abstract class RestClient {
   @Extra({requestAuthKey: RequestAuth.protected})
   @POST(Endpoints.practice)
   Future<HttpResponse> startPractice(@Body() Map<String, dynamic> body);
+
+  @Extra({requestAuthKey: RequestAuth.protected})
+  @GET(Endpoints.practiceSources)
+  Future<HttpResponse> practiceSources();
 }

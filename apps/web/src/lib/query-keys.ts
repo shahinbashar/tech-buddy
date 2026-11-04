@@ -13,6 +13,7 @@ export const queryKeys = {
   leaderboard: (examId: string) => ['exams', 'leaderboard', examId] as const,
   plans: ['premium', 'plans'] as const,
   subjectsPublic: ['subjects', 'public'] as const,
+  practiceSources: ['practice', 'sources'] as const,
   admin: {
     all: ['admin'] as const,
     overview: ['admin', 'overview'] as const,

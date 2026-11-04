@@ -11,6 +11,8 @@ export interface PracticeRequest {
   mode: PracticeMode;
   subjectId?: string;
   topicId?: string;
+  /** A past paper from `GET /practice/sources`. */
+  reference?: string;
   questionCount: number;
 }
 

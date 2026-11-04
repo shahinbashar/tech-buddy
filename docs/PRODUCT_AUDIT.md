@@ -27,7 +27,7 @@ Date: Nov 2026. This compares publicly described features of popular Bangladeshi
 | 2   | **Merit list / rank** for daily exams                              | Live MCQ, Chorcha, BCS Prostuti | Motivation and return visits; percentile is a strong progress signal | ✅ Implemented                                                             |
 | 3   | **Saved circulars + closing-soon tracking**                        | Bdjobs, Job Circular apps       | Candidates track several applications; missing a deadline is costly  | ✅ Implemented (in-app); push and email reminders come with the mobile app |
 | 4   | Push notifications (new circulars, deadlines, daily-exam reminder) | Job Circular apps               | Retention                                                            | ➡️ Mobile app (FCM) — next phase                                           |
-| 5   | Previous-year question bank browsing                               | Chorcha, Live MCQ               | Content depth                                                        | ➡️ Planned: filter questions by `reference`                                |
+| 5   | Previous-year question bank browsing                               | Chorcha, Live MCQ               | Content depth                                                        | ✅ Implemented: past papers grouped by question `reference`                |
 | 6   | Weekly long model test (100–200 marks)                             | Medha                           | Exam realism                                                         | ✅ Already supported (`MODEL` exam type, configurable size and duration)   |
 | 7   | Written-answer evaluation                                          | Live Written                    | Niche, operationally heavy                                           | ❌ Out of scope                                                            |
 
@@ -39,3 +39,5 @@ Date: Nov 2026. This compares publicly described features of popular Bangladeshi
    - It uses the same exam engine, so you still get the timer, snapshots and server scoring.
 2. **Leaderboard & rank:** `GET /exams/:id/leaderboard` returns the top scorers on first attempts (privacy-friendly display names), plus your own rank, the participant count and your percentile. These are shown on the result page.
 3. **Saved circulars:** a save toggle on circulars, a "Saved circulars" page, and a dashboard reminder that highlights saved circulars closing within 7 days.
+4. **Past papers:** `GET /practice/sources` lists papers (distinct question `reference`s) with how many questions the user can draw; `POST /practice { reference }` practises one as a set. Web and mobile list them, with premium-only papers shown locked.
+5. **Mobile app:** the same journey on Flutter — daily exam, practice and past papers, circulars with saving, and a Study tab with notes and topic completion. Weak topics open their notes for revision.
