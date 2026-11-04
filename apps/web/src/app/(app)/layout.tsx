@@ -11,7 +11,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <aside>
           <SideNav nav="user" />
         </aside>
-        <main className="min-w-0">{children}</main>
+        <main id="main-content" tabIndex={-1} className="outline-none min-w-0">
+          {children}
+        </main>
       </div>
     </div>
   );

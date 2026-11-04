@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { ErrorState } from '@/components/common/error-state';
 import { ListSkeleton } from '@/components/common/list-skeleton';
 import { PageHeader } from '@/components/common/page-header';
+import { ResultNextSteps } from '@/components/exams/result-next-steps';
 import { ResultSummary } from '@/components/exams/result-summary';
 import { ReviewQuestionCard } from '@/components/exams/review-question-card';
 import { SubjectBreakdownTable } from '@/components/exams/subject-breakdown-table';
@@ -70,6 +71,11 @@ export function ResultView({ attemptId }: { attemptId: string }) {
         description={`Submitted ${formatDateTime(data.submittedAt)}`}
       />
       <ResultSummary result={data.result} />
+      <ResultNextSteps
+        examId={data.exam.id}
+        canRetake={Boolean(data.exam.allowMultipleAttempts)}
+        hasMistakes={data.result.incorrectCount + data.result.unansweredCount > 0}
+      />
       <SubjectBreakdownTable rows={data.subjectBreakdown} />
 
       <section className="space-y-4">

@@ -17,7 +17,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <aside>
           <SideNav nav="admin" />
         </aside>
-        <main className="min-w-0">{children}</main>
+        <main id="main-content" tabIndex={-1} className="outline-none min-w-0">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -11,7 +11,13 @@ export default async function FocusLayout({ children }: { children: React.ReactN
           <BrandLogo href="/dashboard" />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">{children}</main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="outline-none mx-auto max-w-6xl px-4 py-6 sm:px-6"
+      >
+        {children}
+      </main>
     </div>
   );
 }

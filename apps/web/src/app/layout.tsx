@@ -27,6 +27,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${inter.variable} ${hindSiliguri.variable}`}>
       <body className="min-h-screen font-sans">
+        <a
+          href="#main-content"
+          className="bg-primary text-primary-foreground sr-only z-50 rounded-md px-4 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        >
+          Skip to content
+        </a>
         <Providers initialUser={user}>{children}</Providers>
       </body>
     </html>

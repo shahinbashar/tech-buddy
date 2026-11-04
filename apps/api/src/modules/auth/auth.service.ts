@@ -64,8 +64,9 @@ export class AuthService {
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<AuthResult> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+    // 400, not 401: the session is valid, only the submitted field is wrong.
     if (!(await verifyPassword(dto.currentPassword, user.passwordHash))) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new BadRequestException('Current password is incorrect');
     }
     if (dto.currentPassword === dto.newPassword) {
       throw new BadRequestException('New password must be different from the current password');

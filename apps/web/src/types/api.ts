@@ -346,6 +346,9 @@ export interface UserDashboard {
     correct: number;
     answered: number;
     accuracy: number;
+    /** Null when the topic is no longer published. */
+    topicSlug: string | null;
+    subjectSlug: string | null;
   }[];
   recentAttempts: {
     id: string;

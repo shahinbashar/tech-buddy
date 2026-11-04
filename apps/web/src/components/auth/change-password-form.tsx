@@ -33,10 +33,10 @@ export function ChangePasswordForm() {
 
   const change = useMutation({
     mutationFn: ({ currentPassword, newPassword }: ChangePasswordValues) =>
-      api.post<void>('/users/me/password', { currentPassword, newPassword }),
+      api.post<void>('/auth/password', { currentPassword, newPassword }),
     onSuccess: () => {
       form.reset();
-      toast.success('Password changed');
+      toast.success('Password changed — other devices have been signed out');
     },
     onError: (error) => toast.error(errorMessage(error)),
   });

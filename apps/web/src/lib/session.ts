@@ -1,5 +1,5 @@
 import 'server-only';
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import { cache } from 'react';
 import { serverApiOrNull } from './api-server';
 import type { User } from '@/types/api';
@@ -9,6 +9,8 @@ export const getSessionUser = cache(async (): Promise<User | null> => {
   try {
     return await serverApiOrNull<User>('/auth/me');
   } catch (error) {
+    // Let Next.js control-flow signals (dynamic rendering, redirects) propagate untouched.
+    unstable_rethrow(error);
     // The API being unreachable must not take the whole site down; treat as signed out.
     console.error('Failed to resolve session user:', error);
     return null;

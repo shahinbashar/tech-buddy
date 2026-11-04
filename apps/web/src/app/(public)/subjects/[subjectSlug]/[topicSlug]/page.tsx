@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { Markdown } from '@/components/common/markdown';
 import { CompleteTopicButton } from '@/components/learning/complete-topic-button';
 import { NoteSection } from '@/components/learning/note-section';
+import { NotesToc } from '@/components/learning/notes-toc';
 import { TopicPager } from '@/components/learning/topic-pager';
 import { LockedContent } from '@/components/premium/locked-content';
 import { Card, CardContent } from '@/components/ui/card';
@@ -122,6 +123,7 @@ export default async function TopicPage({ params }: { params: Params }) {
       {!topic.isLocked && (
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">Notes</h2>
+          <NotesToc notes={topic.notes} />
           {topic.notes.length
             ? topic.notes.map((note) => (
                 <NoteSection key={note.id} note={note} isSignedIn={Boolean(user)} />

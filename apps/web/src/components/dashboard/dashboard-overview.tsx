@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { BookCheck, ClipboardList, Flame, Percent, Target, Trophy } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { ErrorState } from '@/components/common/error-state';
 import { CardGridSkeleton } from '@/components/common/list-skeleton';
 import { StatCard } from '@/components/common/stat-card';
@@ -24,6 +25,12 @@ export function DashboardOverview({ needsGoal }: { needsGoal: boolean }) {
     queryKey: queryKeys.dashboard,
     queryFn: () => api.get<UserDashboard>('/dashboard/me'),
   });
+
+  // Content loads client-side, so honour #anchors (e.g. #weak-topics) once it is rendered.
+  useEffect(() => {
+    if (!data || !window.location.hash) return;
+    document.querySelector(window.location.hash)?.scrollIntoView({ behavior: 'smooth' });
+  }, [data]);
 
   if (isPending) return <CardGridSkeleton cards={6} />;
   if (error) return <ErrorState error={error} onRetry={() => void refetch()} />;
