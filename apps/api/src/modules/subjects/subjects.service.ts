@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { type AuthUser } from '../../common/types/auth-user';
-import { slugify } from '../../common/utils/slug';
+import { findAvailableSlug } from '../../common/utils/slug';
 import { PremiumAccessService } from '../premium/premium-access.service';
+import { UploadsService } from '../uploads/uploads.service';
 import { canAccess } from '../premium/premium-access';
+import { buildTopicTree, flattenTopicTree } from '../topics/topic-tree';
 import { type CreateSubjectDto, type UpdateSubjectDto } from './dto/subject.dto';
 
 @Injectable()
@@ -11,6 +13,7 @@ export class SubjectsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly premiumAccess: PremiumAccessService,
+    private readonly uploads: UploadsService,
   ) {}
 
   // ─────────────── Public ───────────────
@@ -19,14 +22,19 @@ export class SubjectsService {
     const subjects = await this.prisma.subject.findMany({
       where: { isPublished: true },
       orderBy: [{ order: 'asc' }, { name: 'asc' }],
-      include: { topics: { where: { isPublished: true }, select: { id: true } } },
+      include: {
+        topics: { where: { isPublished: true }, select: { id: true, parentId: true } },
+      },
     });
     const completed = user ? await this.completedTopicIds(user.id) : new Set<string>();
-    return subjects.map(({ topics, ...subject }) => ({
-      ...subject,
-      topicCount: topics.length,
-      completedCount: topics.filter((t) => completed.has(t.id)).length,
-    }));
+    return subjects.map(({ topics, ...subject }) => {
+      const visible = flattenTopicTree(topics);
+      return {
+        ...subject,
+        topicCount: visible.length,
+        completedCount: visible.filter((t) => completed.has(t.id)).length,
+      };
+    });
   }
 
   async findPublicBySlug(slug: string, user?: AuthUser) {
@@ -61,11 +69,8 @@ export class SubjectsService {
       isCompleted: completed.has(topic.id),
       isLocked: !canAccess(topic.accessLevel, hasPremium),
     }));
-    // Subtopics whose parent is unpublished are hidden together with it.
-    const roots = nodes
-      .filter((n) => !n.parentId)
-      .map((root) => ({ ...root, children: nodes.filter((n) => n.parentId === root.id) }));
-    const visible = roots.flatMap((root) => [root, ...root.children]);
+    const roots = buildTopicTree(nodes);
+    const visible = flattenTopicTree(nodes);
 
     const { topics: _topics, ...rest } = subject;
     return {
@@ -109,16 +114,20 @@ export class SubjectsService {
 
   async remove(id: string): Promise<void> {
     await this.findById(id);
+    const files = await this.prisma.attachment.findMany({
+      where: { note: { topic: { subjectId: id } } },
+      select: { fileName: true },
+    });
     // Questions restrict deletion (FK) — the Prisma filter turns that into a 409.
     await this.prisma.subject.delete({ where: { id } });
+    await this.uploads.removeFiles(files.map((f) => f.fileName));
   }
 
-  private async availableSlug(name: string): Promise<string> {
-    const base = slugify(name);
-    let slug = base;
-    for (let i = 2; await this.prisma.subject.count({ where: { slug } }); i++)
-      slug = `${base}-${i}`;
-    return slug;
+  private availableSlug(name: string): Promise<string> {
+    return findAvailableSlug(
+      name,
+      async (slug) => (await this.prisma.subject.count({ where: { slug } })) > 0,
+    );
   }
 
   private async completedTopicIds(userId: string): Promise<Set<string>> {

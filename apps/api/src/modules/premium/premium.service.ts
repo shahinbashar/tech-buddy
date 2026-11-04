@@ -9,8 +9,7 @@ import {
   entitlementStatus,
   type EntitlementStatus,
 } from './premium-access';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { DAY_MS } from '../../common/utils/time';
 
 const entitlementInclude = {
   plan: { select: { id: true, name: true, code: true } },

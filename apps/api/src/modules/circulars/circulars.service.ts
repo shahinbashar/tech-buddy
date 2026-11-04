@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { type JobCircular, type Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { endOfDhakaDay } from '../../common/utils/dhaka-time';
+import { DAY_MS } from '../../common/utils/time';
 import { paginate, toSkipTake } from '../../common/utils/pagination';
 import { uniqueSlug } from '../../common/utils/slug';
 import { UploadsService } from '../uploads/uploads.service';
@@ -11,8 +12,6 @@ import {
   type AdminListCircularsQueryDto,
   type ListCircularsQueryDto,
 } from './dto/list-circulars.dto';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const attachmentSelect = {
   id: true,

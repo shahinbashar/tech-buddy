@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { AccessLevel } from '@prisma/client';
-import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -12,6 +11,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
+import { Trim, TrimToNull } from '../../../common/dto/transforms';
 
 export class CreateNoteDto {
   @ApiProperty()
@@ -19,16 +19,14 @@ export class CreateNoteDto {
   topicId: string;
 
   @ApiProperty({ example: 'De Morgan’s theorem explained' })
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Trim()
   @IsString()
   @MinLength(2)
   @MaxLength(200)
   title: string;
 
   @ApiPropertyOptional()
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim() || null : value,
-  )
+  @TrimToNull()
   @IsString()
   @MaxLength(500)
   @IsOptional()

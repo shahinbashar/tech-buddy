@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { type AuthUser } from '../../common/types/auth-user';
 import { canAccess } from '../premium/premium-access';
 import { PremiumAccessService } from '../premium/premium-access.service';
+import { flattenTopicTree } from '../topics/topic-tree';
 
 @Injectable()
 export class ProgressService {
@@ -13,7 +14,13 @@ export class ProgressService {
 
   async markComplete(user: AuthUser, topicId: string) {
     const topic = await this.prisma.topic.findFirst({
-      where: { id: topicId, isPublished: true, subject: { isPublished: true } },
+      where: {
+        id: topicId,
+        isPublished: true,
+        subject: { isPublished: true },
+        // A subtopic is only visible while its parent topic is published.
+        OR: [{ parentId: null }, { parent: { isPublished: true } }],
+      },
       select: { id: true, accessLevel: true },
     });
     if (!topic) throw new NotFoundException('Topic not found');
@@ -58,14 +65,11 @@ export class ProgressService {
     const completedAt = new Map(progress.map((p) => [p.topicId, p.completedAt]));
 
     const bySubject = subjects.map(({ topics, ...subject }) => {
-      const ordered = topics
-        .filter((t) => !t.parentId)
-        .flatMap((root) => [root, ...topics.filter((t) => t.parentId === root.id)])
-        .map((t) => ({
-          ...t,
-          isCompleted: completedAt.has(t.id),
-          completedAt: completedAt.get(t.id) ?? null,
-        }));
+      const ordered = flattenTopicTree(topics).map((t) => ({
+        ...t,
+        isCompleted: completedAt.has(t.id),
+        completedAt: completedAt.get(t.id) ?? null,
+      }));
       return {
         ...subject,
         totalTopics: ordered.length,

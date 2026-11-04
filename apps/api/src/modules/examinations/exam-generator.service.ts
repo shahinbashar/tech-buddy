@@ -13,7 +13,10 @@ export class ExamGeneratorService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  getSettings(): Promise<ExamSettings> {
+  /** Reads the settings row, creating it with defaults only when it is missing. */
+  async getSettings(): Promise<ExamSettings> {
+    const existing = await this.prisma.examSettings.findUnique({ where: { id: SETTINGS_ID } });
+    if (existing) return existing;
     return this.prisma.examSettings.upsert({
       where: { id: SETTINGS_ID },
       create: { id: SETTINGS_ID },

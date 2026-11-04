@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { AccessLevel, Difficulty } from '@prisma/client';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -17,25 +17,20 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
+import { ToBoolean, Trim, TrimToNull } from '../../../common/dto/transforms';
 
 export const OPTIONS_PER_QUESTION = 4;
 
-const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
-const trimOrNull = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() || null : value;
-const toBool = ({ value }: { value: unknown }) =>
-  value === 'true' ? true : value === 'false' ? false : value;
-
 export class QuestionOptionInputDto {
   @ApiProperty()
-  @Transform(trim)
+  @Trim()
   @IsString()
   @MinLength(1)
   @MaxLength(500)
   text: string;
 
   @ApiPropertyOptional()
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(500)
   @IsOptional()
@@ -48,20 +43,20 @@ export class CreateQuestionDto {
   subjectId: string;
 
   @ApiPropertyOptional({ nullable: true })
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @IsOptional()
   topicId?: string | null;
 
   @ApiProperty()
-  @Transform(trim)
+  @Trim()
   @IsString()
   @MinLength(3)
   @MaxLength(2000)
   text: string;
 
   @ApiPropertyOptional()
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(2000)
   @IsOptional()
@@ -86,14 +81,14 @@ export class CreateQuestionDto {
   correctOptionIndex: number;
 
   @ApiProperty()
-  @Transform(trim)
+  @Trim()
   @IsString()
   @MinLength(1)
   @MaxLength(5000)
   explanation: string;
 
   @ApiPropertyOptional()
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(500)
   @IsOptional()
@@ -134,7 +129,7 @@ export class ListQuestionsQueryDto extends PaginationQueryDto {
   accessLevel?: AccessLevel;
 
   @ApiPropertyOptional()
-  @Transform(toBool)
+  @ToBoolean()
   @IsBoolean()
   @IsOptional()
   published?: boolean;

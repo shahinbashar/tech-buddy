@@ -11,6 +11,8 @@ export interface AuthUser {
 export interface JwtPayload {
   sub: string;
   role: Role;
+  /** User.sessionVersion at issue time; a mismatch means the session was revoked. */
+  sv: number;
 }
 
 export const AUTH_COOKIE_NAME = 'tb_access_token';

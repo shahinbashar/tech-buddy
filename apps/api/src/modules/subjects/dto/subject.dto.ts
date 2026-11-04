@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { SubjectCategory } from '@prisma/client';
-import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -11,27 +10,25 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-
-const trimOrNull = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() || null : value;
+import { Trim, TrimToNull } from '../../../common/dto/transforms';
 
 export class CreateSubjectDto {
   @ApiProperty({ example: 'Computer Science' })
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Trim()
   @IsString()
   @MinLength(2)
   @MaxLength(100)
   name: string;
 
   @ApiPropertyOptional({ example: 'কম্পিউটার বিজ্ঞান' })
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(100)
   @IsOptional()
   nameBn?: string | null;
 
   @ApiPropertyOptional()
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(1000)
   @IsOptional()

@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { AccessLevel } from '@prisma/client';
-import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -12,9 +11,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
-
-const trimOrNull = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() || null : value;
+import { Trim, TrimToNull } from '../../../common/dto/transforms';
 
 export class CreateTopicDto {
   @ApiProperty()
@@ -22,27 +19,27 @@ export class CreateTopicDto {
   subjectId: string;
 
   @ApiPropertyOptional({ description: 'Parent topic id (makes this a subtopic)', nullable: true })
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @IsOptional()
   parentId?: string | null;
 
   @ApiProperty({ example: 'Boolean Algebra' })
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Trim()
   @IsString()
   @MinLength(2)
   @MaxLength(150)
   title: string;
 
   @ApiPropertyOptional()
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(1000)
   @IsOptional()
   description?: string | null;
 
   @ApiPropertyOptional({ description: 'Markdown overview' })
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(100_000)
   @IsOptional()

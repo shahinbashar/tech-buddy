@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
 import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { NormalizeEmail, Trim } from '../../../common/dto/transforms';
 
 export const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
 export const PASSWORD_MESSAGE =
@@ -9,16 +9,14 @@ export const BD_PHONE_RULE = /^(?:\+?88)?01[3-9]\d{8}$/;
 
 export class RegisterDto {
   @ApiProperty({ example: 'Rahim Uddin' })
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Trim()
   @IsString()
   @MinLength(2)
   @MaxLength(100)
   fullName: string;
 
   @ApiProperty({ example: 'rahim@example.com' })
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
+  @NormalizeEmail()
   @IsEmail()
   @MaxLength(254)
   email: string;

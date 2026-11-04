@@ -1,3 +1,5 @@
+import { DAY_MS } from '../../common/utils/time';
+
 export type CircularStatus = 'draft' | 'upcoming' | 'open' | 'closed';
 
 interface CircularDates {
@@ -17,8 +19,6 @@ export function circularStatus(circular: CircularDates, now: Date = new Date()):
   if (circular.applicationStartDate > now) return 'upcoming';
   return 'open';
 }
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Whole days remaining until the deadline (0 = closes within 24h); negative when closed. */
 export function daysUntilDeadline(deadline: Date, now: Date = new Date()): number {

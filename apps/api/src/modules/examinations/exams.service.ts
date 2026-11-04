@@ -8,7 +8,7 @@ import { type PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { canAccess } from '../premium/premium-access';
 import { PremiumAccessService } from '../premium/premium-access.service';
 import { ExamGeneratorService } from './exam-generator.service';
-import { SUBMISSION_GRACE_MS } from './attempts.service';
+import { isWithinAttemptWindow } from './exam.constants';
 
 const examCardInclude = { _count: { select: { questions: true } } } satisfies Prisma.ExamInclude;
 type ExamWithCount = Prisma.ExamGetPayload<{ include: typeof examCardInclude }>;
@@ -102,7 +102,7 @@ export class ExamsService {
       const mine = attempts.filter((a) => a.examId === exam.id);
       const submitted = mine.filter((a) => a.status === 'SUBMITTED');
       const inProgress = mine.find(
-        (a) => a.status === 'IN_PROGRESS' && a.expiresAt.getTime() + SUBMISSION_GRACE_MS > now,
+        (a) => a.status === 'IN_PROGRESS' && isWithinAttemptWindow(a.expiresAt, now),
       );
       const isLocked = !canAccess(exam.accessLevel, hasPremium);
       const isOpen = exam.examDate <= today;

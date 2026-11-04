@@ -1,6 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PreparationGoal } from '@prisma/client';
-import { Transform } from 'class-transformer';
 import {
   IsEnum,
   IsOptional,
@@ -11,10 +10,11 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { BD_PHONE_RULE } from '../../auth/dto/register.dto';
+import { Trim, TrimToNull } from '../../../common/dto/transforms';
 
 export class UpdateProfileDto {
   @ApiPropertyOptional()
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Trim()
   @IsString()
   @MinLength(2)
   @MaxLength(100)
@@ -22,7 +22,7 @@ export class UpdateProfileDto {
   fullName?: string;
 
   @ApiPropertyOptional({ nullable: true, description: 'Send null or empty string to clear' })
-  @Transform(({ value }: { value: unknown }) => (value === '' ? null : value))
+  @TrimToNull()
   @ValidateIf((_, value) => value !== null)
   @IsString()
   @Matches(BD_PHONE_RULE, { message: 'Enter a valid Bangladeshi mobile number' })

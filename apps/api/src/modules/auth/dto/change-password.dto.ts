@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { PASSWORD_MESSAGE, PASSWORD_RULE } from '../../auth/dto/register.dto';
+import { PASSWORD_MESSAGE, PASSWORD_RULE } from './register.dto';
 
 export class ChangePasswordDto {
   @ApiProperty()

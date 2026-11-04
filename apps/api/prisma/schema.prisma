@@ -104,6 +104,8 @@ model User {
   role            Role             @default(USER)
   preparationGoal PreparationGoal?
   isActive        Boolean          @default(true)
+  /// Incremented to invalidate all existing JWTs (e.g. on password change).
+  sessionVersion  Int              @default(0)
   lastLoginAt     DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt

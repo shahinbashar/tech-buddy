@@ -1,20 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { type Prisma } from '@prisma/client';
-import { compare, hash } from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { paginate, toSkipTake } from '../../common/utils/pagination';
 import { activeEntitlementWhere } from '../premium/premium-access';
 import { PremiumAccessService } from '../premium/premium-access.service';
-import { type ChangePasswordDto } from './dto/change-password.dto';
 import { type ListUsersQueryDto } from './dto/list-users.dto';
 import { type UpdateProfileDto } from './dto/update-profile.dto';
-
-export const BCRYPT_ROUNDS = 12;
 
 export const publicUserSelect = {
   id: true,
@@ -51,21 +42,6 @@ export class UsersService {
   async updateProfile(userId: string, dto: UpdateProfileDto): Promise<PublicUser> {
     await this.prisma.user.update({ where: { id: userId }, data: dto });
     return this.getProfile(userId);
-  }
-
-  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
-    if (!(await compare(dto.currentPassword, user.passwordHash))) {
-      throw new UnauthorizedException('Current password is incorrect');
-    }
-    if (dto.currentPassword === dto.newPassword) {
-      throw new BadRequestException('New password must be different from the current password');
-    }
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { passwordHash: await hash(dto.newPassword, BCRYPT_ROUNDS) },
-    });
   }
 
   async list(query: ListUsersQueryDto) {
@@ -112,7 +88,11 @@ export class UsersService {
   async setActive(actorId: string, userId: string, isActive: boolean): Promise<PublicUser> {
     if (actorId === userId)
       throw new BadRequestException('You cannot change your own account status');
-    await this.prisma.user.update({ where: { id: userId }, data: { isActive } });
+    // Deactivation also revokes existing sessions so reactivation doesn't resurrect them.
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive, ...(isActive ? {} : { sessionVersion: { increment: 1 } }) },
+    });
     return this.getProfile(userId);
   }
 }

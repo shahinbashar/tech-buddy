@@ -66,9 +66,16 @@ export class JwtAuthGuard implements CanActivate {
     // Load from DB so deactivation and role changes take effect immediately.
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, fullName: true, role: true, isActive: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        sessionVersion: true,
+      },
     });
-    if (!user?.isActive) return null;
+    if (!user?.isActive || user.sessionVersion !== payload.sv) return null;
     return { id: user.id, email: user.email, fullName: user.fullName, role: user.role };
   }
 }

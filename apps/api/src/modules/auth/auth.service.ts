@@ -1,18 +1,26 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { compare, hash } from 'bcryptjs';
+import { type User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { type JwtPayload } from '../../common/types/auth-user';
 import { UsersService, type PublicUser } from '../users/users.service';
+import { type ChangePasswordDto } from './dto/change-password.dto';
 import { type LoginDto } from './dto/login.dto';
 import { type RegisterDto } from './dto/register.dto';
-
-import { BCRYPT_ROUNDS } from '../users/users.service';
+import { hashPassword, verifyPassword } from './password';
 
 export interface AuthResult {
   user: PublicUser;
   accessToken: string;
 }
+
+type TokenSubject = Pick<User, 'id' | 'role' | 'sessionVersion'>;
 
 @Injectable()
 export class AuthService {
@@ -34,31 +42,47 @@ export class AuthService {
         email: dto.email,
         fullName: dto.fullName,
         phone: dto.phone,
-        passwordHash: await hash(dto.password, BCRYPT_ROUNDS),
+        passwordHash: await hashPassword(dto.password),
         role: 'USER',
         lastLoginAt: new Date(),
       },
     });
-    return this.issue(user.id, user.role);
+    return this.issue(user);
   }
 
   async login(dto: LoginDto): Promise<AuthResult> {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    // Same message for unknown email and wrong password to avoid account enumeration.
-    const valid = user ? await compare(dto.password, user.passwordHash) : false;
+    const valid = await verifyPassword(dto.password, user?.passwordHash);
     if (!user || !valid) throw new UnauthorizedException('Invalid email or password');
     if (!user.isActive) throw new UnauthorizedException('This account has been deactivated');
 
     await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    return this.issue(user.id, user.role);
+    return this.issue(user);
   }
 
-  private async issue(userId: string, role: JwtPayload['role']): Promise<AuthResult> {
-    const payload: JwtPayload = { sub: userId, role };
-    const [accessToken, user] = await Promise.all([
+  /** Changes the password and revokes every other session; returns a fresh session for this one. */
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<AuthResult> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (!(await verifyPassword(dto.currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('New password must be different from the current password');
+    }
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: await hashPassword(dto.newPassword), sessionVersion: { increment: 1 } },
+    });
+    return this.issue(updated);
+  }
+
+  private async issue(user: TokenSubject): Promise<AuthResult> {
+    const payload: JwtPayload = { sub: user.id, role: user.role, sv: user.sessionVersion };
+    const [accessToken, profile] = await Promise.all([
       this.jwtService.signAsync(payload),
-      this.usersService.getProfile(userId),
+      this.usersService.getProfile(user.id),
     ]);
-    return { user, accessToken };
+    return { user: profile, accessToken };
   }
 }

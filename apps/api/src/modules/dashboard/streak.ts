@@ -1,6 +1,5 @@
 import { dhakaDate } from '../../common/utils/dhaka-time';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { DAY_MS } from '../../common/utils/time';
 
 /**
  * Consecutive Asia/Dhaka days with activity, ending today — or yesterday, so a streak

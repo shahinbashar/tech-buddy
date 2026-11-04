@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { type ExamAnswer, type ExamAttempt } from '@prisma/client';
+import { type ExamAnswer, type ExamAttempt, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { type AuthUser } from '../../common/types/auth-user';
 import { dhakaDate } from '../../common/utils/dhaka-time';
@@ -14,10 +14,8 @@ import { canAccess } from '../premium/premium-access';
 import { PremiumAccessService } from '../premium/premium-access.service';
 import { buildAnswerSnapshots, parseSnapshotOptions } from './attempt-snapshot';
 import { type SaveAnswerDto } from './dto/exam.dto';
+import { isWithinAttemptWindow } from './exam.constants';
 import { computeScore, timeSpentSeconds } from './scoring';
-
-/** Answers arriving slightly after expiry (network latency) are still accepted. */
-export const SUBMISSION_GRACE_MS = 15_000;
 
 type AttemptWithAnswers = ExamAttempt & { answers: ExamAnswer[] };
 
@@ -60,7 +58,7 @@ export class AttemptsService {
     });
     const inProgress = previous.find((a) => a.status === 'IN_PROGRESS');
     if (inProgress) {
-      if (inProgress.expiresAt.getTime() + SUBMISSION_GRACE_MS > Date.now()) {
+      if (isWithinAttemptWindow(inProgress.expiresAt)) {
         return { attemptId: inProgress.id, resumed: true };
       }
       await this.finalize(inProgress.id);
@@ -71,22 +69,34 @@ export class AttemptsService {
 
     const startedAt = new Date();
     const snapshots = buildAnswerSnapshots(exam.questions.map((q) => q.question));
-    const attempt = await this.prisma.examAttempt.create({
-      data: {
-        examId,
-        userId: user.id,
-        attemptNumber: (previous[0]?.attemptNumber ?? 0) + 1,
-        startedAt,
-        expiresAt: new Date(startedAt.getTime() + exam.durationMinutes * 60_000),
-        totalQuestions: snapshots.length,
-        totalMarks: snapshots.length * exam.marksPerQuestion,
-        unansweredCount: snapshots.length,
-        marksPerQuestion: exam.marksPerQuestion,
-        negativeMarking: exam.negativeMarking,
-        examTitle: exam.title,
-        answers: { createMany: { data: snapshots } },
-      },
-    });
+    let attempt: ExamAttempt;
+    try {
+      attempt = await this.prisma.examAttempt.create({
+        data: {
+          examId,
+          userId: user.id,
+          attemptNumber: (previous[0]?.attemptNumber ?? 0) + 1,
+          startedAt,
+          expiresAt: new Date(startedAt.getTime() + exam.durationMinutes * 60_000),
+          totalQuestions: snapshots.length,
+          totalMarks: snapshots.length * exam.marksPerQuestion,
+          unansweredCount: snapshots.length,
+          marksPerQuestion: exam.marksPerQuestion,
+          negativeMarking: exam.negativeMarking,
+          examTitle: exam.title,
+          answers: { createMany: { data: snapshots } },
+        },
+      });
+    } catch (error) {
+      // A parallel request (e.g. double click) created the attempt first — resume it.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const existing = await this.prisma.examAttempt.findFirst({
+          where: { examId, userId: user.id, status: 'IN_PROGRESS' },
+        });
+        if (existing) return { attemptId: existing.id, resumed: true };
+      }
+      throw error;
+    }
     return { attemptId: attempt.id, resumed: false };
   }
 
@@ -103,8 +113,9 @@ export class AttemptsService {
 
   async submit(userId: string, attemptId: string, answers: SaveAnswerDto[] = []) {
     const attempt = await this.getOwnedAttempt(userId, attemptId);
-    if (attempt.status === 'IN_PROGRESS' && answers.length && this.isWritable(attempt)) {
-      await this.applyAnswers(attempt, answers);
+    if (attempt.status === 'IN_PROGRESS' && answers.length) {
+      // Late flushes are dropped silently: whatever was saved in time gets scored.
+      await this.applyAnswers(attempt, answers, { strict: false });
     }
     await this.finalize(attemptId);
     return this.view(userId, attemptId);
@@ -210,19 +221,20 @@ export class AttemptsService {
     );
   }
 
-  /** Scores and closes an attempt exactly once (idempotent; safe under concurrent calls). */
+  /**
+   * Scores and closes an attempt exactly once. The attempt row is locked so a concurrent
+   * answer write cannot change answers between scoring and closing.
+   */
   async finalize(attemptId: string): Promise<void> {
-    const attempt = await this.prisma.examAttempt.findUnique({
-      where: { id: attemptId },
-      include: { answers: true },
-    });
-    if (!attempt || attempt.status === 'SUBMITTED') return;
-
-    const now = new Date();
-    const score = computeScore(attempt.answers, attempt);
     await this.prisma.$transaction(async (tx) => {
-      const { count } = await tx.examAttempt.updateMany({
-        where: { id: attemptId, status: 'IN_PROGRESS' },
+      const attempt = await this.lockAttempt(tx, attemptId);
+      if (!attempt || attempt.status === 'SUBMITTED') return;
+
+      const answers = await tx.examAnswer.findMany({ where: { attemptId } });
+      const now = new Date();
+      const score = computeScore(answers, attempt);
+      await tx.examAttempt.update({
+        where: { id: attemptId },
         data: {
           status: 'SUBMITTED',
           submittedAt: now,
@@ -235,7 +247,6 @@ export class AttemptsService {
           timeSpentSeconds: timeSpentSeconds(attempt.startedAt, now, attempt.expiresAt),
         },
       });
-      if (!count) return;
       await tx.$executeRaw`
         UPDATE "ExamAnswer"
         SET "isCorrect" = CASE WHEN "selectedOptionId" IS NULL THEN NULL
@@ -256,34 +267,65 @@ export class AttemptsService {
     return attempt;
   }
 
-  private isWritable(attempt: ExamAttempt): boolean {
-    return (
-      attempt.status === 'IN_PROGRESS' &&
-      Date.now() <= attempt.expiresAt.getTime() + SUBMISSION_GRACE_MS
-    );
+  private isWritable(attempt: Pick<ExamAttempt, 'status' | 'expiresAt'>): boolean {
+    return attempt.status === 'IN_PROGRESS' && isWithinAttemptWindow(attempt.expiresAt);
   }
 
-  private assertWritable(attempt: ExamAttempt): void {
-    if (attempt.status !== 'IN_PROGRESS')
+  private assertWritable(attempt: Pick<ExamAttempt, 'status' | 'expiresAt'>): void {
+    if (attempt.status !== 'IN_PROGRESS') {
       throw new BadRequestException('This attempt has already been submitted');
-    if (!this.isWritable(attempt)) throw new BadRequestException('Time is up for this attempt');
+    }
+    if (!isWithinAttemptWindow(attempt.expiresAt)) {
+      throw new BadRequestException('Time is up for this attempt');
+    }
   }
 
-  private async applyAnswers(attempt: AttemptWithAnswers, updates: SaveAnswerDto[]): Promise<void> {
+  /** Row-locks the attempt for the rest of the transaction (serializes answer writes vs. finalize). */
+  private async lockAttempt(tx: Prisma.TransactionClient, attemptId: string) {
+    const rows = await tx.$queryRaw<
+      Pick<
+        ExamAttempt,
+        'id' | 'status' | 'startedAt' | 'expiresAt' | 'marksPerQuestion' | 'negativeMarking'
+      >[]
+    >`
+      SELECT "id", "status", "startedAt", "expiresAt", "marksPerQuestion", "negativeMarking"
+      FROM "ExamAttempt" WHERE "id" = ${attemptId} FOR UPDATE`;
+    return rows[0] ?? null;
+  }
+
+  /** Validates and stores answers while holding the attempt lock. */
+  private async applyAnswers(
+    attempt: AttemptWithAnswers,
+    updates: SaveAnswerDto[],
+    { strict }: { strict: boolean } = { strict: true },
+  ): Promise<void> {
     const byId = new Map(attempt.answers.map((a) => [a.id, a]));
-    const operations = updates.map((update) => {
+    const changes = updates.map((update) => {
       const answer = byId.get(update.answerId);
       if (!answer) throw new BadRequestException('Answer does not belong to this attempt');
       const selected = update.selectedOptionId ?? null;
       if (selected && !parseSnapshotOptions(answer.options).some((o) => o.id === selected)) {
         throw new BadRequestException('Selected option is not valid for this question');
       }
-      return this.prisma.examAnswer.update({
-        where: { id: answer.id },
-        data: { selectedOptionId: selected, answeredAt: selected ? new Date() : null },
-      });
+      return { id: answer.id, selected };
     });
-    await this.prisma.$transaction(operations);
+
+    await this.prisma.$transaction(async (tx) => {
+      const locked = await this.lockAttempt(tx, attempt.id);
+      if (!locked) throw new NotFoundException('Attempt not found');
+      if (!strict && !this.isWritable(locked)) return;
+      this.assertWritable(locked);
+      const answeredAt = new Date();
+      for (const change of changes) {
+        await tx.examAnswer.update({
+          where: { id: change.id },
+          data: {
+            selectedOptionId: change.selected,
+            answeredAt: change.selected ? answeredAt : null,
+          },
+        });
+      }
+    });
   }
 
   private accuracy(correct: number, incorrect: number): number {

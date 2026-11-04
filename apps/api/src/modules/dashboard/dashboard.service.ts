@@ -4,9 +4,10 @@ import { dhakaDate } from '../../common/utils/dhaka-time';
 import { activeEntitlementWhere } from '../premium/premium-access';
 import { ProgressService } from '../progress/progress.service';
 import { currentStreak } from './streak';
+import { DAY_MS } from '../../common/utils/time';
 
 const WEAK_TOPIC_MIN_ANSWERS = 3;
-const DAY_MS = 24 * 60 * 60 * 1000;
+const WEAK_TOPIC_ACCURACY = 70;
 
 const pct = (part: number, whole: number) =>
   whole ? Math.round((part / whole) * 10_000) / 100 : 0;
@@ -95,12 +96,13 @@ export class DashboardService {
       if (group.isCorrect) entry.correct += group._count._all;
       topics.set(group.topicId, entry);
     }
-    const weakTopics = [...topics.values()]
+    const weakest = [...topics.values()]
       .filter((t) => t.answered >= WEAK_TOPIC_MIN_ANSWERS)
       .map((t) => ({ ...t, accuracy: pct(t.correct, t.answered) }))
-      .filter((t) => t.accuracy < 70)
+      .filter((t) => t.accuracy < WEAK_TOPIC_ACCURACY)
       .sort((a, b) => a.accuracy - b.accuracy)
       .slice(0, 5);
+    const weakTopics = await this.withRevisionLinks(weakest);
 
     const activity = [
       ...attempts.map((a) => a.submittedAt).filter((d): d is Date => d !== null),
@@ -142,6 +144,26 @@ export class DashboardService {
       weakTopics,
       recentAttempts: attempts.slice(-5).reverse(),
     };
+  }
+
+  /** Adds subject/topic slugs so the UI can link to the topic for revision (null if unpublished). */
+  private async withRevisionLinks<T extends { topicId: string }>(items: T[]) {
+    if (!items.length) return [];
+    const topics = await this.prisma.topic.findMany({
+      where: {
+        id: { in: items.map((t) => t.topicId) },
+        isPublished: true,
+        subject: { isPublished: true },
+      },
+      select: { id: true, slug: true, subject: { select: { slug: true } } },
+    });
+    const links = new Map(
+      topics.map((t) => [t.id, { topicSlug: t.slug, subjectSlug: t.subject.slug }]),
+    );
+    return items.map((item) => ({
+      ...item,
+      ...(links.get(item.topicId) ?? { topicSlug: null, subjectSlug: null }),
+    }));
   }
 
   async adminOverview() {

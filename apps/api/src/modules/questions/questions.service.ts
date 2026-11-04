@@ -77,6 +77,17 @@ export class QuestionsService {
       await this.assertSubjectAndTopic(subjectId, topicId);
     }
 
+    if (dto.accessLevel === 'PREMIUM' && existing.accessLevel === 'FREE') {
+      const freeExams = await this.prisma.examQuestion.count({
+        where: { questionId: id, exam: { accessLevel: 'FREE' } },
+      });
+      if (freeExams) {
+        throw new BadRequestException(
+          `This question is used in ${freeExams} free exam(s), so it cannot become premium.`,
+        );
+      }
+    }
+
     const { options, correctOptionIndex, ...data } = dto;
     const nextOptions = options ?? existing.options.map(({ text, textBn }) => ({ text, textBn }));
     const nextCorrect = correctOptionIndex ?? existing.options.findIndex((o) => o.isCorrect);

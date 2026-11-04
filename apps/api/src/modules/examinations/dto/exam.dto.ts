@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AccessLevel, ExamType } from '@prisma/client';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -17,10 +17,9 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { Trim, TrimToNull } from '../../../common/dto/transforms';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const trimOrNull = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() || null : value;
 
 export class ExamSettingsDto {
   @ApiProperty({ minimum: 1, maximum: 200 })
@@ -58,7 +57,7 @@ export class ExamSettingsDto {
 
 class ExamConfigFields {
   @ApiPropertyOptional()
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(1000)
   @IsOptional()
@@ -142,7 +141,7 @@ export class CreateExamDto extends ExamConfigFields {
     example: 'Daily Exam — ICT',
     description: 'Defaults to "Daily Exam — <date>"',
   })
-  @Transform(trimOrNull)
+  @TrimToNull()
   @IsString()
   @MinLength(3)
   @MaxLength(150)
@@ -158,7 +157,7 @@ export class CreateExamDto extends ExamConfigFields {
 
 export class UpdateExamDto extends ExamConfigFields {
   @ApiPropertyOptional()
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @Trim()
   @IsString()
   @MinLength(3)
   @MaxLength(150)

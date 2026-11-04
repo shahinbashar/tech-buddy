@@ -25,6 +25,19 @@ class EnvironmentVariables {
   @IsOptional()
   CORS_ORIGINS?: string;
 
+  /** Number of reverse proxies in front of the API (Next.js rewrite = 1). Used for client IPs. */
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  @Min(0)
+  @Max(5)
+  TRUST_PROXY_HOPS = 1;
+
+  /** Swagger UI; enabled by default outside production. */
+  @Transform(({ value }) => (value === undefined ? undefined : value === true || value === 'true'))
+  @IsBoolean()
+  @IsOptional()
+  ENABLE_SWAGGER?: boolean;
+
   @IsString()
   DATABASE_URL: string;
 

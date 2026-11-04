@@ -3,10 +3,11 @@ import { type Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { type AuthUser } from '../../common/types/auth-user';
 import { paginate, toSkipTake } from '../../common/utils/pagination';
-import { slugify } from '../../common/utils/slug';
+import { findAvailableSlug } from '../../common/utils/slug';
 import { canAccess } from '../premium/premium-access';
 import { PremiumAccessService } from '../premium/premium-access.service';
 import { UploadsService } from '../uploads/uploads.service';
+import { flattenTopicTree } from './topic-tree';
 import { type CreateTopicDto, type ListTopicsQueryDto, type UpdateTopicDto } from './dto/topic.dto';
 
 const navSelect = { id: true, slug: true, title: true } satisfies Prisma.TopicSelect;
@@ -178,10 +179,7 @@ export class TopicsService {
       select: { ...navSelect, parentId: true },
       orderBy: [{ order: 'asc' }, { title: 'asc' }],
     });
-    return topics
-      .filter((t) => !t.parentId)
-      .flatMap((root) => [root, ...topics.filter((t) => t.parentId === root.id)])
-      .map(({ id, slug, title }) => ({ id, slug, title }));
+    return flattenTopicTree(topics).map(({ id, slug, title }) => ({ id, slug, title }));
   }
 
   /** Enforces one level of nesting within the same subject. */
@@ -202,11 +200,10 @@ export class TopicsService {
     }
   }
 
-  private async availableSlug(subjectId: string, title: string): Promise<string> {
-    const base = slugify(title);
-    let slug = base;
-    for (let i = 2; await this.prisma.topic.count({ where: { subjectId, slug } }); i++)
-      slug = `${base}-${i}`;
-    return slug;
+  private availableSlug(subjectId: string, title: string): Promise<string> {
+    return findAvailableSlug(
+      title,
+      async (slug) => (await this.prisma.topic.count({ where: { subjectId, slug } })) > 0,
+    );
   }
 }

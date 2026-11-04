@@ -15,3 +15,14 @@ export function slugify(input: string): string {
 export function uniqueSlug(input: string): string {
   return `${slugify(input)}-${randomBytes(3).toString('hex')}`;
 }
+
+/** Returns `slugify(text)`, suffixed with -2, -3… until `isTaken` reports it free. */
+export async function findAvailableSlug(
+  text: string,
+  isTaken: (slug: string) => Promise<boolean>,
+): Promise<string> {
+  const base = slugify(text);
+  let slug = base;
+  for (let i = 2; await isTaken(slug); i++) slug = `${base}-${i}`;
+  return slug;
+}

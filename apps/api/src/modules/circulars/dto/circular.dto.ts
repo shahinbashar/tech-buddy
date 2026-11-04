@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CircularCategory, EmploymentType, JobType } from '@prisma/client';
-import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -13,32 +12,25 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-
-const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
-const emptyToNull = ({ value }: { value: unknown }) =>
-  typeof value === 'string' && value.trim() === ''
-    ? null
-    : typeof value === 'string'
-      ? value.trim()
-      : value;
+import { Trim, TrimToNull } from '../../../common/dto/transforms';
 
 export class CreateCircularDto {
   @ApiProperty({ example: 'Bangladesh Computer Council' })
-  @Transform(trim)
+  @Trim()
   @IsString()
   @MinLength(2)
   @MaxLength(200)
   organizationName: string;
 
   @ApiPropertyOptional({ example: 'বাংলাদেশ কম্পিউটার কাউন্সিল' })
-  @Transform(emptyToNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(200)
   @IsOptional()
   organizationNameBn?: string | null;
 
   @ApiProperty({ example: 'Assistant Programmer' })
-  @Transform(trim)
+  @Trim()
   @IsString()
   @MinLength(2)
   @MaxLength(200)
@@ -75,42 +67,42 @@ export class CreateCircularDto {
   vacancies?: number | null;
 
   @ApiPropertyOptional({ example: 'Grade 9 (৳22,000–53,060)' })
-  @Transform(emptyToNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(200)
   @IsOptional()
   salary?: string | null;
 
   @ApiPropertyOptional()
-  @Transform(emptyToNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(5000)
   @IsOptional()
   educationalQualification?: string | null;
 
   @ApiPropertyOptional()
-  @Transform(emptyToNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(1000)
   @IsOptional()
   ageRequirement?: string | null;
 
   @ApiPropertyOptional()
-  @Transform(emptyToNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(10000)
   @IsOptional()
   additionalRequirements?: string | null;
 
   @ApiPropertyOptional()
-  @Transform(emptyToNull)
+  @TrimToNull()
   @IsString()
   @MaxLength(10000)
   @IsOptional()
   applicationInstructions?: string | null;
 
   @ApiPropertyOptional({ example: 'https://bcc.teletalk.com.bd' })
-  @Transform(emptyToNull)
+  @TrimToNull()
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @MaxLength(500)
   @IsOptional()

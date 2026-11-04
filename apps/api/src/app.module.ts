@@ -24,7 +24,14 @@ import { HealthController } from './health.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv, cache: true }),
-    ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<AppConfig, true>) => ({
+        throttlers: [{ name: 'default', ttl: 60_000, limit: 120 }],
+        // Automated tests hammer the API from one address.
+        skipIf: () => config.get('NODE_ENV', { infer: true }) === 'test',
+      }),
+    }),
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],

@@ -9,6 +9,7 @@ import { AUTH_COOKIE_NAME, type AuthUser } from '../../common/types/auth-user';
 import { type AppConfig } from '../../config/env.validation';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -59,6 +60,20 @@ export class AuthController {
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response): void {
     res.clearCookie(AUTH_COOKIE_NAME, this.cookieOptions());
+  }
+
+  /** Changing the password signs out every other device; this one gets a fresh cookie. */
+  @ApiBearerAuth()
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('password')
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ChangePasswordDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const { accessToken } = await this.authService.changePassword(user.id, dto);
+    this.setAuthCookie(res, accessToken);
   }
 
   @ApiBearerAuth()
