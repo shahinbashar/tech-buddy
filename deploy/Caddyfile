@@ -1,0 +1,17 @@
+# One origin for everything, so the web app's httpOnly auth cookie works without CORS.
+# Caddy obtains and renews the TLS certificate for {$DOMAIN} automatically.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# API and uploaded files go straight to the API (the web and mobile apps share these paths).
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+	handle /uploads/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

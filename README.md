@@ -172,8 +172,12 @@ docker-compose.yml
 Automated circular scraping · payment gateway checkout · password-reset / email verification · push notifications ·
 full i18n on the web · private-sector preparation tracks.
 
-## Production notes
+## Deployment (CI/CD)
 
-- Set `NODE_ENV=production`, `COOKIE_SECURE=true` (HTTPS), a strong `JWT_SECRET`, and `API_URL` for the web app.
-- Run `pnpm --filter api prisma:deploy` on release; never run the seed with default credentials.
-- Uploads are stored on local disk (`UPLOAD_DIR`); mount a persistent volume or move to object storage when scaling out.
+Merging a pull request into `main` deploys automatically: CI → Docker images on GHCR → SSH roll-out to a Docker
+Compose server (Caddy HTTPS, migrations, health checks, automatic rollback) → smoke test. The same run builds the
+Android APK. Setup and operations: **[deploy/README.md](deploy/README.md)**.
+
+- Images: [`apps/api/Dockerfile`](apps/api/Dockerfile), [`apps/web/Dockerfile`](apps/web/Dockerfile) (Next.js standalone).
+- The production seed (`SEED_DEMO_CONTENT=false`) creates only the admin, premium plans and exam settings.
+- Uploads live on the `uploads` volume; move to object storage before running more than one API instance.

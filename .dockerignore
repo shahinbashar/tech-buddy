@@ -1,0 +1,16 @@
+# Keep build contexts small and free of secrets.
+**/node_modules
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/dist
+**/dist-seed
+**/.next
+**/coverage
+**/*.tsbuildinfo
+apps/api/uploads
+apps/mobile
+docs
+.github
+deploy

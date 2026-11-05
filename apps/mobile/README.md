@@ -43,6 +43,18 @@ flutter analyze
 flutter test
 ```
 
+## Release builds
+
+Every merge to `main` builds a release APK (Actions → Deploy → artifact `tech-buddy-android-<run>`). It points at
+`MOBILE_API_BASE_URL`, or `SITE_URL/api` when that isn't set.
+
+- **Application ID:** `com.techbuddy.mobile`. Change it before the first store upload if you own another domain;
+  it can't change after publishing.
+- **Signing:** add these repository secrets, or builds are signed with the debug key and Play won't accept them:
+  `ANDROID_KEYSTORE_BASE64` (`base64 -w0 release.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+  Locally, put the same values in `android/key.properties` (git-ignored).
+- iOS still uses the template's bundle ID and has no CI build yet.
+
 ## Architecture (from the template)
 
 ```

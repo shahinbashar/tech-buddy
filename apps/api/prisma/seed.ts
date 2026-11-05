@@ -947,11 +947,21 @@ async function seedPremiumAndSettings(): Promise<void> {
   console.log('✓ Premium plans and exam settings');
 }
 
+/**
+ * Demo subjects, notes, questions and circulars are for development. Production sets
+ * `SEED_DEMO_CONTENT=false` and gets only the admin, premium plans and exam settings.
+ */
+const seedDemoContent = process.env.SEED_DEMO_CONTENT?.trim().toLowerCase() !== 'false';
+
 async function main(): Promise<void> {
   await seedAdmin();
-  const topicIds = await seedLearning();
-  await seedQuestions(topicIds);
-  await seedCirculars();
+  if (seedDemoContent) {
+    const topicIds = await seedLearning();
+    await seedQuestions(topicIds);
+    await seedCirculars();
+  } else {
+    console.log('• Demo content skipped (SEED_DEMO_CONTENT=false)');
+  }
   await seedPremiumAndSettings();
 }
 
