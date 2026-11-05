@@ -2,6 +2,7 @@
 
 import { Crown, Loader2, Play, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
+import { StartExamDialog } from '@/components/exams/start-exam-dialog';
 import { Button } from '@/components/ui/button';
 import { useStartExam } from '@/hooks/use-start-exam';
 import type { ExamCard } from '@/types/api';
@@ -37,21 +38,22 @@ export function ExamActionButton({
   if (exam.canStart) {
     const isRetake = exam.attemptCount > 0;
     return (
-      <Button
-        size={size}
-        disabled={start.isPending}
-        onClick={() => start.mutate(exam.id)}
-        variant={isRetake ? 'outline' : 'default'}
-      >
-        {start.isPending ? (
-          <Loader2 className="animate-spin" />
-        ) : isRetake ? (
-          <RotateCcw />
-        ) : (
-          <Play />
-        )}
-        {isRetake ? 'Retake exam' : 'Start exam'}
-      </Button>
+      <StartExamDialog
+        exam={exam}
+        onStart={() => start.mutate(exam.id)}
+        trigger={
+          <Button size={size} disabled={start.isPending} variant={isRetake ? 'outline' : 'default'}>
+            {start.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : isRetake ? (
+              <RotateCcw />
+            ) : (
+              <Play />
+            )}
+            {isRetake ? 'Retake exam' : 'Start exam'}
+          </Button>
+        }
+      />
     );
   }
   if (exam.lastAttemptId) {

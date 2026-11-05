@@ -14,7 +14,7 @@ export function SiteHeader() {
   return (
     <header className="bg-background/90 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:px-6">
-        <MobileNav items={PUBLIC_NAV} />
+        <MobileNav items={PUBLIC_NAV} signedIn={Boolean(user)} />
         <BrandLogo />
         <nav className="ml-6 hidden items-center gap-1 lg:flex" aria-label="Main">
           {PUBLIC_NAV.map((item) => (

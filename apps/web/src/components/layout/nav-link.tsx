@@ -21,7 +21,8 @@ export function NavLink({ item, variant = 'top', onNavigate }: NavLinkProps) {
       onClick={onNavigate}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
+        // nowrap: in the phone's sideways account strip, labels stay on one line.
+        'flex shrink-0 items-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors',
         variant === 'top' ? 'px-3 py-2' : 'px-3 py-2.5',
         active
           ? 'bg-primary/10 text-primary'

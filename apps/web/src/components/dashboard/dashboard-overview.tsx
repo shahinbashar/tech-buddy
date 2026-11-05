@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { BookCheck, ClipboardList, Flame, Percent, Target, Trophy } from 'lucide-react';
+import { BookCheck, Bookmark, ClipboardList, Flame, Percent, Target, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { ErrorState } from '@/components/common/error-state';
@@ -9,9 +9,12 @@ import { CardGridSkeleton } from '@/components/common/list-skeleton';
 import { StatCard } from '@/components/common/stat-card';
 import { AnswerBreakdownChart } from '@/components/dashboard/answer-breakdown-chart';
 import { ClosingSoonCard } from '@/components/dashboard/closing-soon-card';
+import { GettingStartedCard } from '@/components/dashboard/getting-started-card';
 import { PerformanceChart } from '@/components/dashboard/performance-chart';
+import { RecommendedCircularsCard } from '@/components/dashboard/recommended-circulars-card';
 import { RecentAttemptsCard } from '@/components/dashboard/recent-attempts-card';
 import { SubjectPerformanceChart } from '@/components/dashboard/subject-performance-chart';
+import { TodayExamCard } from '@/components/dashboard/today-exam-card';
 import { TopicProgressCard } from '@/components/dashboard/topic-progress-card';
 import { WeakTopicsCard } from '@/components/dashboard/weak-topics-card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -52,9 +55,12 @@ export function DashboardOverview({ needsGoal }: { needsGoal: boolean }) {
         </Alert>
       )}
 
+      <TodayExamCard />
       <ClosingSoonCard circulars={data.savedClosingSoon} />
+      <GettingStartedCard overview={overview} />
+      <RecommendedCircularsCard circulars={data.recommendedCirculars} goal={data.preparationGoal} />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
         <StatCard
           label="Exams taken"
           value={overview.examsTaken}
@@ -87,28 +93,32 @@ export function DashboardOverview({ needsGoal }: { needsGoal: boolean }) {
           tone="warning"
           hint="Days in a row with an exam or completed topic"
         />
-        <div className="bg-primary text-primary-foreground flex flex-col justify-between gap-3 rounded-xl p-5">
-          <div>
-            <p className="font-semibold">Today’s daily exam</p>
-            <p className="text-primary-foreground/80 text-sm">
-              Keep your streak alive with today’s practice set.
-            </p>
-          </div>
-          <Button asChild variant="secondary" size="sm" className="w-fit">
-            <Link href="/exams">Go to exam</Link>
-          </Button>
-        </div>
+        <StatCard
+          label="Saved circulars"
+          value={overview.savedCirculars}
+          icon={Bookmark}
+          hint={
+            <Link href="/dashboard/saved" className="hover:underline">
+              View saved
+            </Link>
+          }
+        />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <PerformanceChart data={data.performanceOverTime} />
-        <SubjectPerformanceChart data={data.subjectPerformance} />
-      </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <AnswerBreakdownChart data={data.answerBreakdown} />
-        <WeakTopicsCard topics={data.weakTopics} />
-        <RecentAttemptsCard attempts={data.recentAttempts} />
-      </div>
+      {/* Charts mean nothing before the first exam; the checklist above covers that stage. */}
+      {overview.examsTaken > 0 && (
+        <>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <PerformanceChart data={data.performanceOverTime} />
+            <SubjectPerformanceChart data={data.subjectPerformance} />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <AnswerBreakdownChart data={data.answerBreakdown} />
+            <WeakTopicsCard topics={data.weakTopics} />
+            <RecentAttemptsCard attempts={data.recentAttempts} />
+          </div>
+        </>
+      )}
       {data.topicProgress.length > 0 && <TopicProgressCard data={data.topicProgress} />}
     </div>
   );

@@ -328,7 +328,18 @@ export interface UserDashboard {
     completedTopics: number;
     totalTopics: number;
     currentStreak: number;
+    savedCirculars: number;
   };
+  preparationGoal: PreparationGoal | null;
+  /** Open circulars matching the goal that the user hasn't saved, closing soonest first. */
+  recommendedCirculars: {
+    id: string;
+    slug: string;
+    title: string;
+    organizationName: string;
+    category: CircularCategory;
+    applicationDeadline: string;
+  }[];
   answerBreakdown: { correct: number; incorrect: number; unanswered: number };
   performanceOverTime: { attemptId: string; date: string; examTitle: string; percentage: number }[];
   subjectPerformance: {

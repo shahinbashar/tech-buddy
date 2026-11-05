@@ -49,7 +49,12 @@ function RecentExams() {
   if (isPending) return <ListSkeleton rows={3} />;
   if (error) return <ErrorState error={error} onRetry={() => void refetch()} />;
   if (!data.items.length)
-    return <EmptyState title="No exams yet" description="Published exams will be listed here." />;
+    return (
+      <EmptyState
+        title="No earlier exams yet"
+        description="Each day’s exam appears here after the day ends."
+      />
+    );
   return (
     <div className="space-y-3">
       {data.items.map((exam) => (
@@ -88,13 +93,17 @@ function PracticeCta() {
 export function ExamHub() {
   return (
     <div className="space-y-8">
-      <PracticeCta />
+      {/* Today's exam is the main job of this page, so it comes first. */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Today</h2>
         <TodayExams />
       </section>
+      <PracticeCta />
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">All exams</h2>
+        <div>
+          <h2 className="text-lg font-semibold">Previous days</h2>
+          <p className="text-muted-foreground text-sm">Missed a day? Every past exam stays open.</p>
+        </div>
         <RecentExams />
       </section>
     </div>

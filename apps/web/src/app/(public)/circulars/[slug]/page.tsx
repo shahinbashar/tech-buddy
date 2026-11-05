@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { AttachmentList } from '@/components/circulars/attachment-list';
+import { AddToCalendarButton, ShareCircularButton } from '@/components/circulars/circular-actions';
 import { CircularInfoRow } from '@/components/circulars/circular-info-row';
 import { DeadlineBadge } from '@/components/circulars/deadline-badge';
 import { SaveCircularButton } from '@/components/circulars/save-circular-button';
@@ -43,6 +44,14 @@ export default async function CircularDetailPage({
   const [circular, user] = await Promise.all([getCircular((await params).slug), getSessionUser()]);
   if (!circular) notFound();
   const isClosed = circular.status === 'closed';
+  // Only what the client-side buttons need crosses to the browser.
+  const actionRef = {
+    id: circular.id,
+    slug: circular.slug,
+    title: circular.title,
+    organizationName: circular.organizationName,
+    applicationDeadline: circular.applicationDeadline,
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6">
@@ -73,12 +82,45 @@ export default async function CircularDetailPage({
             )}
           </span>
         </p>
-        <SaveCircularButton
-          circularId={circular.id}
-          slug={circular.slug}
-          initialSaved={Boolean(circular.isSaved)}
-          isSignedIn={Boolean(user)}
-        />
+        {/* What a candidate checks first, above the fold on a phone. */}
+        <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <li>
+            <span className="text-muted-foreground">Deadline: </span>
+            <span className={isClosed ? 'font-semibold' : 'text-destructive font-semibold'}>
+              {formatDateTime(circular.applicationDeadline)}
+            </span>
+          </li>
+          {circular.vacancies != null && (
+            <li>
+              <span className="text-muted-foreground">Posts: </span>
+              <span className="font-medium">{circular.vacancies}</span>
+            </li>
+          )}
+          {circular.salary && (
+            <li>
+              <span className="text-muted-foreground">Salary: </span>
+              <span className="font-medium">{circular.salary}</span>
+            </li>
+          )}
+        </ul>
+        <div className="flex flex-wrap gap-2">
+          {circular.applicationUrl && !isClosed && (
+            // The sidebar has the same button on large screens.
+            <Button asChild className="lg:hidden">
+              <a href={circular.applicationUrl} target="_blank" rel="noopener noreferrer">
+                Apply on official site <ExternalLink />
+              </a>
+            </Button>
+          )}
+          <SaveCircularButton
+            circularId={circular.id}
+            slug={circular.slug}
+            initialSaved={Boolean(circular.isSaved)}
+            isSignedIn={Boolean(user)}
+          />
+          {!isClosed && <AddToCalendarButton circular={actionRef} />}
+          <ShareCircularButton circular={actionRef} />
+        </div>
       </header>
 
       {isClosed && (

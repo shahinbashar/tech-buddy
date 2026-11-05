@@ -3,11 +3,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { dhakaDate } from '../../common/utils/dhaka-time';
 import { activeEntitlementWhere } from '../premium/premium-access';
 import { ProgressService } from '../progress/progress.service';
+import { categoriesForGoal } from './goal-categories';
 import { currentStreak } from './streak';
 import { DAY_MS } from '../../common/utils/time';
 
 const WEAK_TOPIC_MIN_ANSWERS = 3;
 const WEAK_TOPIC_ACCURACY = 70;
+const RECOMMENDED_CIRCULARS = 3;
 
 const pct = (part: number, whole: number) =>
   whole ? Math.round((part / whole) * 10_000) / 100 : 0;
@@ -22,61 +24,95 @@ export class DashboardService {
   async userDashboard(userId: string) {
     const submitted = { userId, status: 'SUBMITTED' as const };
     const now = new Date();
-    const [attempts, subjectGroups, topicGroups, progress, completions, closingSoon] =
-      await Promise.all([
-        this.prisma.examAttempt.findMany({
-          where: submitted,
-          select: {
-            id: true,
-            examTitle: true,
-            submittedAt: true,
-            percentage: true,
-            obtainedMarks: true,
-            totalMarks: true,
-            correctCount: true,
-            incorrectCount: true,
-            unansweredCount: true,
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { preparationGoal: true },
+    });
+    const goalCategories = categoriesForGoal(user.preparationGoal);
+    const [
+      attempts,
+      subjectGroups,
+      topicGroups,
+      progress,
+      completions,
+      closingSoon,
+      savedCount,
+      recommended,
+    ] = await Promise.all([
+      this.prisma.examAttempt.findMany({
+        where: submitted,
+        select: {
+          id: true,
+          examTitle: true,
+          submittedAt: true,
+          percentage: true,
+          obtainedMarks: true,
+          totalMarks: true,
+          correctCount: true,
+          incorrectCount: true,
+          unansweredCount: true,
+        },
+        orderBy: { submittedAt: 'asc' },
+      }),
+      this.prisma.examAnswer.groupBy({
+        by: ['subjectName', 'isCorrect'],
+        where: { attempt: submitted },
+        _count: { _all: true },
+      }),
+      this.prisma.examAnswer.groupBy({
+        by: ['topicId', 'topicName', 'subjectName', 'isCorrect'],
+        where: { attempt: submitted, topicId: { not: null } },
+        _count: { _all: true },
+      }),
+      this.progressService.overview(userId),
+      this.prisma.userTopicProgress.findMany({
+        where: { userId },
+        select: { completedAt: true },
+      }),
+      this.prisma.savedCircular.findMany({
+        where: {
+          userId,
+          circular: {
+            isPublished: true,
+            applicationDeadline: { gte: now, lte: new Date(now.getTime() + 7 * DAY_MS) },
           },
-          orderBy: { submittedAt: 'asc' },
-        }),
-        this.prisma.examAnswer.groupBy({
-          by: ['subjectName', 'isCorrect'],
-          where: { attempt: submitted },
-          _count: { _all: true },
-        }),
-        this.prisma.examAnswer.groupBy({
-          by: ['topicId', 'topicName', 'subjectName', 'isCorrect'],
-          where: { attempt: submitted, topicId: { not: null } },
-          _count: { _all: true },
-        }),
-        this.progressService.overview(userId),
-        this.prisma.userTopicProgress.findMany({
-          where: { userId },
-          select: { completedAt: true },
-        }),
-        this.prisma.savedCircular.findMany({
-          where: {
-            userId,
-            circular: {
-              isPublished: true,
-              applicationDeadline: { gte: now, lte: new Date(now.getTime() + 7 * DAY_MS) },
+        },
+        select: {
+          circular: {
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              organizationName: true,
+              applicationDeadline: true,
             },
           },
-          select: {
-            circular: {
-              select: {
-                id: true,
-                slug: true,
-                title: true,
-                organizationName: true,
-                applicationDeadline: true,
-              },
-            },
-          },
-          orderBy: { circular: { applicationDeadline: 'asc' } },
-          take: 5,
-        }),
-      ]);
+        },
+        orderBy: { circular: { applicationDeadline: 'asc' } },
+        take: 5,
+      }),
+      this.prisma.savedCircular.count({ where: { userId } }),
+      // Open now, matching the goal, not already saved — closing soonest first.
+      this.prisma.jobCircular.findMany({
+        where: {
+          isPublished: true,
+          applicationStartDate: { lte: now },
+          applicationDeadline: { gte: now },
+          ...(goalCategories ? { category: { in: goalCategories } } : {}),
+          savedBy: { none: { userId } },
+        },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          organizationName: true,
+          category: true,
+          applicationDeadline: true,
+        },
+        orderBy: { applicationDeadline: 'asc' },
+        take: RECOMMENDED_CIRCULARS,
+      }),
+    ]);
 
     const totals = attempts.reduce(
       (acc, a) => ({
@@ -148,7 +184,10 @@ export class DashboardService {
         completedTopics: progress.completedTopics,
         totalTopics: progress.totalTopics,
         currentStreak: currentStreak(activity),
+        savedCirculars: savedCount,
       },
+      preparationGoal: user.preparationGoal,
+      recommendedCirculars: recommended,
       answerBreakdown: totals,
       performanceOverTime: attempts.slice(-20).map((a) => ({
         attemptId: a.id,

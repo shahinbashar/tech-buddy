@@ -37,11 +37,14 @@ export class ExamsService {
     return this.toCards(user, exams);
   }
 
-  /** Published exams up to today, newest first — lets candidates practise missed days. */
+  /**
+   * Published exams from previous days, newest first — lets candidates practise days they
+   * missed. Today's exams come from `today()`, so they are not repeated here.
+   */
   async list(user: AuthUser, query: PaginationQueryDto) {
     const where: Prisma.ExamWhereInput = {
       ...PUBLIC_EXAM_WHERE,
-      examDate: { lte: dhakaDate() },
+      examDate: { lt: dhakaDate() },
       ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
     };
     const [exams, total] = await this.prisma.$transaction([

@@ -11,7 +11,7 @@ admin-managed premium access.
 | Tooling          | pnpm workspaces, Docker Compose (PostgreSQL), ESLint 9, Prettier, Jest (API), Vitest (web)                                         |
 
 Architecture, entities, scope decisions and risks: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** ·
-Code review findings: **[docs/REVIEW.md](docs/REVIEW.md)** · Competitive audit: **[docs/PRODUCT_AUDIT.md](docs/PRODUCT_AUDIT.md)**.
+Code review findings: **[docs/REVIEW.md](docs/REVIEW.md)** · Competitive audit: **[docs/PRODUCT_AUDIT.md](docs/PRODUCT_AUDIT.md)** · Job-seeker UX audit: **[docs/UX_AUDIT.md](docs/UX_AUDIT.md)**.
 
 ---
 

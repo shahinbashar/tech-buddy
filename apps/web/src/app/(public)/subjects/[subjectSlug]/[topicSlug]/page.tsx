@@ -120,23 +120,27 @@ export default async function TopicPage({ params }: { params: Params }) {
         </section>
       )}
 
-      {!topic.isLocked && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold">Notes</h2>
-          <NotesToc notes={topic.notes} />
-          {topic.notes.length
-            ? topic.notes.map((note) => (
-                <NoteSection key={note.id} note={note} isSignedIn={Boolean(user)} />
-              ))
-            : topic.children.length === 0 && (
-                <EmptyState
-                  icon={FileText}
-                  title="No notes yet"
-                  description="Notes for this topic will be published soon."
-                />
-              )}
-        </section>
-      )}
+      {!topic.isLocked &&
+        (topic.notes.length > 0 ? (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold">Notes</h2>
+            <NotesToc notes={topic.notes} />
+            {topic.notes.map((note) => (
+              <NoteSection key={note.id} note={note} isSignedIn={Boolean(user)} />
+            ))}
+          </section>
+        ) : topic.children.length > 0 ? (
+          // A parent topic: its notes live in the subtopics, so say so instead of an empty heading.
+          <p className="text-muted-foreground text-sm">
+            Start with the first subtopic above — each one has its own notes.
+          </p>
+        ) : (
+          <EmptyState
+            icon={FileText}
+            title="No notes yet"
+            description="Notes for this topic will be published soon."
+          />
+        ))}
 
       <TopicPager previous={topic.previous} next={topic.next} subjectSlug={topic.subject.slug} />
     </div>

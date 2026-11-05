@@ -15,7 +15,7 @@ export default async function OnboardingPage() {
         title={`Welcome, ${user.fullName.split(' ')[0]}! What are you preparing for?`}
         description="We’ll use this to personalise your dashboard. You can change it anytime in your profile."
       />
-      <GoalPicker initialGoal={user.preparationGoal} redirectTo="/subjects" />
+      <GoalPicker initialGoal={user.preparationGoal} redirectTo="/dashboard" />
       <Button asChild variant="link" className="px-0">
         <Link href="/dashboard">Skip for now</Link>
       </Button>

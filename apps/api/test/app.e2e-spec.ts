@@ -315,6 +315,56 @@ describe('Tech Buddy API (e2e)', () => {
       await agent().get('/api/circulars/saved').expect(401);
     });
 
+    it('recommends open circulars for the goal and leaves out saved ones', async () => {
+      const { agent: user } = await registeredAgent();
+      const soon = (hours: number) => new Date(Date.now() + hours * 3_600_000);
+      const base = {
+        organizationName: 'E2E Bank',
+        publishedDate: new Date(),
+        applicationStartDate: new Date(Date.now() - 60_000),
+        isPublished: true,
+      };
+      const [bank, saved, it] = await Promise.all([
+        prisma.jobCircular.create({
+          data: {
+            ...base,
+            slug: `rec-bank-${RUN}`,
+            title: 'Officer',
+            category: 'BANK',
+            applicationDeadline: soon(1),
+          },
+        }),
+        prisma.jobCircular.create({
+          data: {
+            ...base,
+            slug: `rec-saved-${RUN}`,
+            title: 'Cash Officer',
+            category: 'BANK',
+            applicationDeadline: soon(1),
+          },
+        }),
+        prisma.jobCircular.create({
+          data: {
+            ...base,
+            slug: `rec-it-${RUN}`,
+            title: 'Programmer',
+            category: 'IT',
+            applicationDeadline: soon(1),
+          },
+        }),
+      ]);
+      await user.patch('/api/users/me').send({ preparationGoal: 'BANK' }).expect(200);
+      await user.put(`/api/circulars/${saved.id}/save`).expect(200);
+
+      const { body } = await user.get('/api/dashboard/me').expect(200);
+      const ids = (body.recommendedCirculars as { id: string }[]).map((c) => c.id);
+      expect(body.preparationGoal).toBe('BANK');
+      expect(body.overview.savedCirculars).toBe(1);
+      expect(ids).toContain(bank.id);
+      expect(ids).not.toContain(saved.id); // already saved
+      expect(ids).not.toContain(it.id); // other goal
+    });
+
     it('creates private practice sets, including a "my mistakes" set', async () => {
       const { agent: user } = await registeredAgent();
       await user.post('/api/practice').send({ mode: 'mistakes', questionCount: 5 }).expect(400);
