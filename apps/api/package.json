@@ -16,6 +16,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed",
+    "db:import-learning": "ts-node --transpile-only prisma/learning/import.ts",
     "db:reset": "prisma migrate reset --force",
     "test:e2e": "jest --config test/jest-e2e.config.js"
   },

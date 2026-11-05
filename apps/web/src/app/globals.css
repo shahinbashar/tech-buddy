@@ -116,4 +116,14 @@
   .markdown :where(pre code) {
     @apply bg-transparent p-0 font-normal text-inherit;
   }
+  /* `#### Solution` folds (lib/remark-solution-fold.ts): closed until the reader asks. */
+  .markdown :where(details.solution) {
+    @apply bg-muted/40 my-4 rounded-lg border px-4 py-2;
+  }
+  .markdown :where(details.solution > summary) {
+    @apply text-primary cursor-pointer font-medium select-none;
+  }
+  .markdown :where(details.solution[open] > summary) {
+    @apply mb-2;
+  }
 }

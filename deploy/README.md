@@ -113,6 +113,15 @@ docker compose -f compose.prod.yml run --rm --no-deps api node dist-seed/seed.js
 
 Then remove `SEED_ADMIN_PASSWORD` from `.env`.
 
+### 6. Study content
+
+Import the Learning notes: subjects, topics, Markdown notes and practice MCQs. It's safe to
+re-run after each content update, because it updates in place:
+
+```bash
+docker compose -f compose.prod.yml run --rm --no-deps api node dist-seed/learning/import.js
+```
+
 ## Operations
 
 All commands run in `/opt/tech-buddy` and need these variables exported:

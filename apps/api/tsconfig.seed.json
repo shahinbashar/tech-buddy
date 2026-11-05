@@ -7,5 +7,6 @@
     "sourceMap": false,
     "declaration": false
   },
-  "include": ["prisma/seed.ts"]
+  "include": ["prisma/seed.ts", "prisma/learning/*.ts"],
+  "exclude": ["prisma/learning/*.spec.ts"]
 }

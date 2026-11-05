@@ -43,6 +43,14 @@ pnpm --filter api db:seed
 ```
 
 ```bash
+pnpm --filter api db:import-learning
+```
+
+The last step imports the real study content from the **Learning** notes (15 subjects, 122 topics, 20 MCQs; see
+[apps/api/prisma/learning/content/SOURCE.md](apps/api/prisma/learning/content/SOURCE.md)). The seed alone gives
+small demo subjects.
+
+```bash
 pnpm dev
 ```
 
@@ -75,7 +83,9 @@ pnpm dev
 
 - **Job circulars** — running (published & deadline not passed) and archived lists, search by organization/designation,
   category & deadline filters, pagination, deadline badges, detail page with eligibility, dates, apply link and PDF/image attachments.
-- **Study notes** — subjects → topics → subtopics, Markdown notes (tables, code), premium notes shown as locked.
+- **Study notes** — subjects → topics → subtopics, Markdown notes (tables, code, mindmaps, hidden solutions), premium notes
+  shown as locked. Real content imported from the Learning notes: 15 subjects including telecom, C, OOP, networking,
+  coding practice, PYQ priority topics and written past papers.
 - About, Contact and Premium plans pages.
 
 ### Registered users

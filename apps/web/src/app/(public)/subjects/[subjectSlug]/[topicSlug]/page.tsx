@@ -135,11 +135,13 @@ export default async function TopicPage({ params }: { params: Params }) {
             Start with the first subtopic above — each one has its own notes.
           </p>
         ) : (
-          <EmptyState
-            icon={FileText}
-            title="No notes yet"
-            description="Notes for this topic will be published soon."
-          />
+          !topic.content && (
+            <EmptyState
+              icon={FileText}
+              title="No notes yet"
+              description="Notes for this topic will be published soon."
+            />
+          )
         ))}
 
       <TopicPager previous={topic.previous} next={topic.next} subjectSlug={topic.subject.slug} />

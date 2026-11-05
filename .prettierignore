@@ -6,3 +6,5 @@ pnpm-lock.yaml
 apps/api/uploads
 apps/api/prisma/migrations
 apps/mobile
+# Copied verbatim from the Learning repo; refresh with a re-copy, never reformat.
+apps/api/prisma/learning/content
