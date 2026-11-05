@@ -13,7 +13,7 @@ export function CountdownTimer({ secondsLeft }: { secondsLeft: number }) {
       className={cn(
         'flex items-center gap-2 rounded-lg border px-3 py-1.5 font-mono text-lg font-semibold tabular-nums',
         urgent
-          ? 'border-destructive bg-destructive/10 text-destructive animate-pulse'
+          ? 'border-destructive bg-destructive/10 text-destructive-strong animate-pulse'
           : warning
             ? 'border-warning bg-warning/15'
             : 'bg-card',
